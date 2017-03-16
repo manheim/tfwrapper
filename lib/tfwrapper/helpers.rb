@@ -33,7 +33,7 @@ module TFWrapper
     def self.run_cmd_stream_output(cmd)
       old_sync = $stdout.sync
       $stdout.sync = true
-      all_out_err = ''
+      all_out_err = ''.dup
       exit_status = nil
       Open3.popen2e(cmd) do |stdin, stdout_and_err, wait_thread|
         stdin.close_write
