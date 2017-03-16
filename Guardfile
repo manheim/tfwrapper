@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 guard :bundler do
   watch('tfwrapper.gemspec')
 end

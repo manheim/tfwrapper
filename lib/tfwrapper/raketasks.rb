@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'tfwrapper/helpers'
 require 'json'
 require 'rake'
@@ -67,24 +68,23 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_name = opts.fetch(:remote_backend_name, 'consul')
       @backend_config = opts.fetch(:backend_config, nil)
-      if @backend_config.nil?
-        if @backend_name == 'consul'
-          @backend_config = {
-            'address' => ENV['CONSUL_HOST'],
-            'path' => @remote_prefix
-          }
-        elsif @backend_name == 's3'
-          @backend_config = {
-            'bucket' => 'manheim-re',
-            'key'    => "terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}" \
-                        '/terraform.tfstate',
-            'region' => 'us-east-1'
-          }
-        else
-          raise StandardError, 'You must specify opts[:backend_config] ' \
-            "when using a remote_backend_name other than 'consul' or 's3'" \
-            " (#{@backend_name})"
-        end
+      return unless @backend_config.nil?
+      if @backend_name == 'consul'
+        @backend_config = {
+          'address' => ENV['CONSUL_HOST'],
+          'path' => @remote_prefix
+        }
+      elsif @backend_name == 's3'
+        @backend_config = {
+          'bucket' => 'manheim-re',
+          'key'    => "terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}" \
+                      '/terraform.tfstate',
+          'region' => 'us-east-1'
+        }
+      else
+        raise StandardError, 'You must specify opts[:backend_config] ' \
+          "when using a remote_backend_name other than 'consul' or 's3'" \
+          " (#{@backend_name})"
       end
     end
 
@@ -303,7 +303,7 @@ module TFWrapper
         end
       end
       # end exponential backoff
-      unless status == 0
+      unless status.zero?
         raise StandardError, "Errors have occurred executing: '#{cmd}' " \
           "(exited #{status})"
       end
@@ -318,10 +318,9 @@ module TFWrapper
         puts 'Removing .terraform/'
         FileUtils.rm_rf('.terraform')
       end
-      if File.exist?("#{@tf_dir}/.terraform")
-        puts "Removing #{@tf_dir}/.terraform"
-        FileUtils.rm_rf("#{@tf_dir}/.terraform")
-      end
+      return unless File.exist?("#{@tf_dir}/.terraform")
+      puts "Removing #{@tf_dir}/.terraform"
+      FileUtils.rm_rf("#{@tf_dir}/.terraform")
     end
 
     # update stack status in Consul
@@ -363,10 +362,8 @@ module TFWrapper
     def cmd_with_targets(cmd_array, suffix_array, target, extras)
       final_arr = cmd_array
       final_arr.concat(['-target', target]) unless target.nil?
-      unless extras.nil?
-        extras.each do |e|
-          final_arr.concat(['-target', e])
-        end
+      extras&.each do |e|
+        final_arr.concat(['-target', e])
       end
       final_arr.concat(suffix_array)
       final_arr.join(' ')

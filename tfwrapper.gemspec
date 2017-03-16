@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 require File.expand_path('../lib/tfwrapper/version', __FILE__)
 
 Gem::Specification.new do |gem|
@@ -7,8 +8,9 @@ Gem::Specification.new do |gem|
   gem.summary     = 'Rake tasks for running Hashicorp Terraform sanely'
   gem.description = [
     'tfwrapper provides Rake tasks for working with Hashicorp Terraform,',
-    'ensuring ptoper configuration of remote state storage,',
-    'and passing in variables from the environment or Ruby.'
+    'ensuring ptoper configuration of remote state storage, removal of local',
+    'state before running, and passing in variables from the environment or',
+    'Ruby.'
   ].join(' ')
   gem.homepage    = 'http://github.com/Manheim/tfwrapper'
   gem.license     = 'MIT'

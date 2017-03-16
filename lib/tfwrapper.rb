@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # TFWrapper module
 module TFWrapper
 end

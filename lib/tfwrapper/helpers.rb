@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'open3'
 require 'English'
 
@@ -14,11 +15,10 @@ module TFWrapper
       puts "Running command: #{cmd}"
       out = `#{cmd}`
       status = $CHILD_STATUS.exitstatus
-      if status != 0
-        puts "Command exited #{status}:"
-        puts out
-        raise StandardError, "ERROR: Command failed: #{cmd}"
-      end
+      return if status.zero?
+      puts "Command exited #{status}:"
+      puts out
+      raise StandardError, "ERROR: Command failed: #{cmd}"
     end
 
     # popen2e wrapper to simultaneously stream command output and capture it.
@@ -68,8 +68,12 @@ module TFWrapper
           missing << name
         end
       end
-      raise StandardError, 'Missing or empty environment variables: ' \
-        "#{missing}" unless missing.empty?
+      # rubocop:disable Style/GuardClause
+      unless missing.empty?
+        raise StandardError, 'Missing or empty environment variables: ' \
+          "#{missing}"
+      end
+      # rubocop:enable Style/GuardClause
     end
   end
 end
