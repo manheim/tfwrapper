@@ -44,23 +44,18 @@ gem 'tfwrapper', '~> 1.0'
 ## Usage
 
 To use the TerraForm rake tasks, require the module in your Rakefile and use the
-``install_tasks`` method to set up the tasks. ``install_tasks`` takes three mandatory
-parameters; ``tf_dir`` specifying the relative path (from the Rakefile) to the
-TerraForm configuration, ``remote_backend_name`` specifying the name of the
-[remote state storage backend](https://www.terraform.io/docs/backends/types/index.html),
-and ``backend_config``, a hash specifying the configuration for the remote state
-storage backend.
-
-As an example, to run terraform in the ``tf/`` directory and store state under
-``terraform/foo`` in a remote Consul cluster at ``consul.example.com:8500``:
+``install_tasks`` method to set up the tasks. ``install_tasks`` takes two mandatory parameters;
+``tf_dir`` specifying the relative path (from the Rakefile) to the TerraForm configuration and ``consul_prefix`` specifying the key to store state at in Consul. It also expects
+the ``CONSUL_HOST`` environment variable to be set to the address of the Consul cluster used for storing state, if you are not overriding the state storage options.
 
 ```
 require 'tfwrapper/raketasks'
 
+ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
+
 TFWrapper::RakeTasks.install_tasks(
   'tf/',
-  'consul',
-  {'address' => 'consul.example.com:8500', 'path' => 'terraform/foo'}
+  "terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}"
 )
 ```
 
@@ -73,7 +68,7 @@ and likewise for the ``environment`` terraform variable from the ``ENVIRONMENT``
 to Consul at the specified path.
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
 tf_env_vars = {
   'consul_address'           => 'CONSUL_HOST',
@@ -93,7 +88,7 @@ via ``tf_vars_from_env``. In the following example, the ``foobar`` terraform var
 of ``baz``, regardless of what the ``FOOBAR`` environment variable is set to:
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
 tf_env_vars = {
   'consul_address'           => 'CONSUL_HOST',
@@ -116,7 +111,7 @@ that acts on the configurations under ``tf/``, and one with a ``foo_tf:`` namesp
 that acts on the configurations under ``foo/``:
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
 TFWrapper::RakeTasks.install_tasks(
   tf_dir='tf/'
@@ -136,7 +131,7 @@ TFWrapper::RakeTasks.install_tasks(
 To store your remote state under ``foo/bar`` in Consul:
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 
 ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
 
@@ -150,7 +145,7 @@ To store your state at ``terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}/terra
 (the default key if not otherwise specified) in the ``manheim-re`` S3 bucket in us-east-1:
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 
 TFWrapper::RakeTasks.install_tasks(
   'tf/',
@@ -162,7 +157,7 @@ TFWrapper::RakeTasks.install_tasks(
 To store your state at ``foo/bar/terraform.tfstate`` in the ``baz`` S3 bucket in us-west-1:
 
 ```
-require 'manheim_helpers/terraform/raketasks'
+require 'tfwrapper/raketasks'
 
 TFWrapper::RakeTasks.install_tasks(
   'tf/',
