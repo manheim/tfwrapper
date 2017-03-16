@@ -50,7 +50,7 @@ Gem::Specification.new do |gem|
                                     .reject { |f| f =~ %r{^samples\/} }
   gem.executables   = gem.files.grep(%r{^bin/}).map { |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
-  gem.name          = 'dogtrainer'
+  gem.name          = 'tfwrapper'
   gem.require_paths = ['lib']
-  gem.version       = DogTrainer::VERSION
+  gem.version       = TFWrapper::VERSION
 end
