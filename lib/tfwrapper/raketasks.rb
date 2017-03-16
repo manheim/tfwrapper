@@ -362,9 +362,9 @@ module TFWrapper
     def cmd_with_targets(cmd_array, suffix_array, target, extras)
       final_arr = cmd_array
       final_arr.concat(['-target', target]) unless target.nil?
-      extras&.each do |e|
-        final_arr.concat(['-target', e])
-      end
+      # rubocop:disable Style/SafeNavigation
+      extras.each { |e| final_arr.concat(['-target', e]) } unless extras.nil?
+      # rubocop:enable Style/SafeNavigation
       final_arr.concat(suffix_array)
       final_arr.join(' ')
     end
