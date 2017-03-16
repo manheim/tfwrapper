@@ -13,6 +13,7 @@ dependencies:
 
 test:
   override:
+    - 'bundle exec ruby --version'
     - 'bundle exec rake spec'
     - 'bundle exec rake rubocop'
     - 'rvm 2.0.0-p598 exec bundle exec rake spec'
