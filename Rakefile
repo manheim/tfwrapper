@@ -16,9 +16,21 @@ RuboCop::RakeTask.new(:rubocop) do |task|
   task.fail_on_error = true
 end
 
-RSpec::Core::RakeTask.new(:spec) do |t|
-  t.rspec_opts = ['--require', 'spec_helper']
-  t.pattern = 'spec/**/*_spec.rb'
+namespace :spec do
+  desc 'run ALL spec tests'
+  task all: [:unit, :acceptance]
+
+  desc 'run unit tests'
+  RSpec::Core::RakeTask.new(:unit) do |t|
+    t.rspec_opts = ['--require', 'spec_helper']
+    t.pattern = 'spec/unit/*_spec.rb'
+  end
+
+  desc 'run acceptance tests'
+  RSpec::Core::RakeTask.new(:acceptance) do |t|
+    t.rspec_opts = ['--require', 'spec_helper']
+    t.pattern = 'spec/acceptance/*_spec.rb'
+  end
 end
 
 namespace :yard do

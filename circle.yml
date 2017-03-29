@@ -14,10 +14,10 @@ dependencies:
 test:
   override:
     - 'bundle exec ruby --version'
-    - 'bundle exec rake spec'
+    - 'bundle exec rake spec:unit'
     - 'bundle exec rake rubocop'
-    - 'rvm 2.0.0-p598 exec bundle exec rake spec'
-    - 'rvm 2.1.8 exec bundle exec rake spec'
-    - 'rvm 2.2.5 exec bundle exec rake spec'
-    - 'rvm 2.3.1 exec bundle exec rake spec'
+    - 'rvm 2.0.0-p598 exec bundle exec rake spec:unit'
+    - 'rvm 2.1.8 exec bundle exec rake spec:unit'
+    - 'rvm 2.2.5 exec bundle exec rake spec:unit'
+    - 'rvm 2.3.1 exec bundle exec rake spec:unit'
     - 'bundle exec rake yard:generate'
