@@ -50,11 +50,12 @@ describe TFWrapper::Helpers do
           @inpipe_w, @outerrpipe_r, dbl_wait_thread
         )
 
-        expect(Open3).to receive(:popen2e).once.with('foo bar')
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', :chdir => '/foo')
         expect(STDOUT).to receive(:puts).once.with('mystdout')
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
-        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar'))
+        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar', '/foo'))
           .to eq(['mystdout', 0])
       end
     end
@@ -71,11 +72,12 @@ describe TFWrapper::Helpers do
           @inpipe_w, @outerrpipe_r, dbl_wait_thread
         )
 
-        expect(Open3).to receive(:popen2e).once.with('foo bar')
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', :chdir => '/foo')
         expect(STDERR).to receive(:puts).once.with('IOError: closed stream')
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
-        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar'))
+        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar', '/foo'))
           .to eq(['', 0])
       end
     end
@@ -93,12 +95,13 @@ describe TFWrapper::Helpers do
           @inpipe_w, @outerrpipe_r, dbl_wait_thread
         )
 
-        expect(Open3).to receive(:popen2e).once.with('foo bar')
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', :chdir => '/foo')
         expect(STDOUT).to receive(:puts).once.with("mystdout\n")
         expect(STDOUT).to receive(:puts).once.with("STDERR\n")
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
-        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar'))
+        expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar', '/foo'))
           .to eq(["mystdout\nSTDERR\n", 23])
       end
     end

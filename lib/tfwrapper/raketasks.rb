@@ -26,7 +26,9 @@ module TFWrapper
 
     # Generate Rake tasks for working with Terraform at Manheim.
     #
-    # @param tf_dir [String] TerraForm config directory, relative to Rakefile
+    # @param tf_dir [String] TerraForm config directory, relative to Rakefile.
+    #   Set to '.' if the Rakefile is in the same directory as the ``.tf``
+    #   configuration files.
     # @param remote_prefix [String] path/key to store the Terraform saved
     #   state in Consul. You __must__ be sure that this will be unique
     #   per environment; it should include environment, application,
@@ -265,7 +267,8 @@ module TFWrapper
     end
 
     # Run a Terraform command, providing some useful output and handling AWS
-    # API rate limiting gracefully. Raises StandardError on failure.
+    # API rate limiting gracefully. Raises StandardError on failure. The command
+    # is run in @tf_dir.
     #
     # @param cmd [String] Terraform command to run
     # rubocop:disable Metrics/PerceivedComplexity
@@ -288,7 +291,7 @@ module TFWrapper
       ) do
         # this streams STDOUT and STDERR as a combined stream,
         # and also captures them as a combined string
-        out_err, status = TFWrapper::Helpers.run_cmd_stream_output(cmd)
+        out_err, status = TFWrapper::Helpers.run_cmd_stream_output(cmd, @tf_dir)
         if status != 0 && out_err.include?('hrottling')
           raise StandardError, 'TerraForm hit AWS API rate limiting'
         end

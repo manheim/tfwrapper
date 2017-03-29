@@ -29,13 +29,14 @@ module TFWrapper
     # prone to deadlocking if large chunks of data are written to the pipes.
     #
     # @param cmd [String] command to run
+    # @param pwd [String] directory/path to run command in
     # @return [Array] - out_err [String], exit code [Fixnum]
-    def self.run_cmd_stream_output(cmd)
+    def self.run_cmd_stream_output(cmd, pwd)
       old_sync = $stdout.sync
       $stdout.sync = true
       all_out_err = ''.dup
       exit_status = nil
-      Open3.popen2e(cmd) do |stdin, stdout_and_err, wait_thread|
+      Open3.popen2e(cmd, :chdir => pwd) do |stdin, stdout_and_err, wait_thread|
         stdin.close_write
         begin
           while (line = stdout_and_err.gets)
