@@ -10,7 +10,8 @@ Gem::Specification.new do |gem|
     'tfwrapper provides Rake tasks for working with Hashicorp Terraform 0.9+,',
     'ensuring proper initialization and passing in variables from the ',
     'environment or Ruby, as well as optionally pushing some information to ',
-    'Consul.'
+    'Consul. tfwrapper also attempts to detect and retry failed runs due to ',
+    'AWS throttling or access denied errors.'
   ].join(' ')
   gem.homepage    = 'http://github.com/Manheim/tfwrapper'
   gem.license     = 'MIT'

@@ -4,13 +4,16 @@ Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/tfwrapper.s
 
 Documentation: [http://www.rubydoc.info/gems/tfwrapper/](http://www.rubydoc.info/gems/tfwrapper/)
 
-tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) 0.9+, ensuring proper initialization and passing in variables from the environment or Ruby, as well as optionally pushing some information to Consul.
+tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) 0.9+, ensuring proper initialization and passing in variables from the environment or Ruby, as well as optionally pushing some information to Consul. tfwrapper also attempts to detect and retry
+failed runs due to AWS throttling or access denied errors.
 
 ## Overview
 
 This Gem provides the following Rake tasks:
 
-* __tf:get__ - run ``terraform get`` to pull down dependency modules
+* __tf:init__ - run ``terraform init`` to pull down dependency modules and configure remote
+  state backend. This task also checks that any configured environment variables are set and
+  that the ``terraform`` version is compatible with this gem.
 * __tf:plan__ - run ``terraform plan`` with all variables and configuration, and TF variables written to disk. You can specify
   one or more optional [resource address](https://www.terraform.io/docs/internals/resource-addressing.html) targets to pass to
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:plan[aws_instance.foo[1]]`` or
@@ -27,7 +30,6 @@ This Gem provides the following Rake tasks:
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:destroy[aws_instance.foo[1]]`` or
   ``bundle exec rake tf:destroy[aws_instance.foo[1],aws_instance.bar[2]]``; see the
   [destroy documentation](https://www.terraform.io/docs/commands/destroy.html) for more information.
-* __tf:set_remote__ - used as a prerequisite for other tasks; configure TerraForm to point to the Consul remote state storage
 * __tf:write_tf_vars__ - used as a prerequisite for other tasks; write TerraForm variables to file on disk
 
 ## Installation
