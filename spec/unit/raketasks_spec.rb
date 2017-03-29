@@ -287,7 +287,7 @@ describe TFWrapper::RakeTasks do
       expect(subject).to receive(:terraform_runner)
         .once.ordered.with('terraform -version')
       expect(subject).to receive(:terraform_runner)
-        .once.ordered.with('terraform get tfdir')
+        .once.ordered.with('terraform get')
       Rake.application['tf:get'].invoke
     end
   end
@@ -351,7 +351,7 @@ describe TFWrapper::RakeTasks do
       Rake.application['tf:plan'].clear_prerequisites
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform plan -var-file build.tfvars.json tfdir')
+        .with('terraform plan -var-file build.tfvars.json')
       Rake.application['tf:plan'].invoke
     end
     it 'runs the plan command with one target' do
@@ -359,7 +359,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform plan -var-file build.tfvars.json ' \
-              '-target tar.get[1] tfdir')
+              '-target tar.get[1]')
       Rake.application['tf:plan'].invoke('tar.get[1]')
     end
     it 'runs the plan command with three targets' do
@@ -367,7 +367,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform plan -var-file build.tfvars.json ' \
-              '-target tar.get[1] -target t.gt[2] -target my.target[3] tfdir')
+              '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:plan'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
@@ -398,7 +398,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json tfdir')
+        .with('terraform apply -var-file build.tfvars.json')
       expect(subject).to_not receive(:update_consul_stack_env_vars)
       Rake.application['tf:apply'].invoke
     end
@@ -407,7 +407,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform apply -var-file build.tfvars.json ' \
-              '-target tar.get[1] tfdir')
+              '-target tar.get[1]')
       Rake.application['tf:apply'].invoke('tar.get[1]')
     end
     it 'runs the apply command with three targets' do
@@ -415,7 +415,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform apply -var-file build.tfvars.json ' \
-              '-target tar.get[1] -target t.gt[2] -target my.target[3] tfdir')
+              '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:apply'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
@@ -426,7 +426,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json tfdir')
+        .with('terraform apply -var-file build.tfvars.json')
       expect(subject).to receive(:update_consul_stack_env_vars).once
       Rake.application['tf:apply'].invoke
     end
@@ -454,7 +454,7 @@ describe TFWrapper::RakeTasks do
       Rake.application['tf:refresh'].clear_prerequisites
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform refresh -var-file build.tfvars.json tfdir')
+        .with('terraform refresh -var-file build.tfvars.json')
       Rake.application['tf:refresh'].invoke
     end
   end
@@ -482,7 +482,7 @@ describe TFWrapper::RakeTasks do
       Rake.application['tf:destroy'].clear_prerequisites
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform destroy -force -var-file build.tfvars.json tfdir')
+        .with('terraform destroy -force -var-file build.tfvars.json')
       Rake.application['tf:destroy'].invoke
     end
     it 'runs the destroy command with one target' do
@@ -490,7 +490,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform destroy -force -var-file build.tfvars.json ' \
-              '-target tar.get[1] tfdir')
+              '-target tar.get[1]')
       Rake.application['tf:destroy'].invoke('tar.get[1]')
     end
     it 'runs the destroy command with three targets' do
@@ -498,7 +498,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform destroy -force -var-file build.tfvars.json ' \
-              '-target tar.get[1] -target t.gt[2] -target my.target[3] tfdir')
+              '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:destroy'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
@@ -762,58 +762,53 @@ describe TFWrapper::RakeTasks do
       expect(
         subject.cmd_with_targets(
           ['terraform', 'plan', '-var-file', 'foo'],
-          ['tf/dir'],
           nil,
           nil
         )
       )
-        .to eq('terraform plan -var-file foo tf/dir')
+        .to eq('terraform plan -var-file foo')
     end
     it 'creates the command string with no targets and a long suffix' do
       expect(
         subject.cmd_with_targets(
           ['terraform', 'plan', '-var-file', 'foo'],
-          ['tf/dir', 'bar', 'baz'],
           nil,
           nil
         )
       )
-        .to eq('terraform plan -var-file foo tf/dir bar baz')
+        .to eq('terraform plan -var-file foo')
     end
     it 'creates the command string if one target specified' do
       expect(
         subject.cmd_with_targets(
           ['terraform', 'plan', '-var-file', 'foo'],
-          ['tf/dir'],
           'tar.get[1]',
           nil
         )
       )
-        .to eq('terraform plan -var-file foo -target tar.get[1] tf/dir')
+        .to eq('terraform plan -var-file foo -target tar.get[1]')
     end
     it 'creates the command string if two targets specified' do
       expect(
         subject.cmd_with_targets(
           ['terraform', 'plan', '-var-file', 'foo'],
-          ['tf/dir'],
           'tar.get[1]',
           ['tar.get[2]']
         )
       )
         .to eq('terraform plan -var-file foo -target tar.get[1] ' \
-               '-target tar.get[2] tf/dir')
+               '-target tar.get[2]')
     end
     it 'creates the command string if four targets specified' do
       expect(
         subject.cmd_with_targets(
           ['terraform', 'plan', '-var-file', 'foo'],
-          ['tf/dir'],
           'tar.get[1]',
           ['tar.get[2]', 'my.target[3]']
         )
       )
         .to eq('terraform plan -var-file foo -target tar.get[1] ' \
-               '-target tar.get[2] -target my.target[3] tf/dir')
+               '-target tar.get[2] -target my.target[3]')
     end
   end
 end

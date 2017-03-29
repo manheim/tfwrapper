@@ -118,7 +118,7 @@ module TFWrapper
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
           # output the terraform version for logging purposes
           terraform_runner('terraform -version')
-          terraform_runner("terraform get #{@tf_dir}")
+          terraform_runner("terraform get")
         end
       end
     end
@@ -156,7 +156,6 @@ module TFWrapper
         ] do |_t, args|
           cmd = cmd_with_targets(
             ['terraform', 'plan', "-var-file #{var_file_path}"],
-            [@tf_dir],
             args[:target],
             args.extras
           )
@@ -178,7 +177,6 @@ module TFWrapper
         ] do |_t, args|
           cmd = cmd_with_targets(
             ['terraform', 'apply', "-var-file #{var_file_path}"],
-            [@tf_dir],
             args[:target],
             args.extras
           )
@@ -199,8 +197,7 @@ module TFWrapper
           cmd = [
             'terraform',
             'refresh',
-            "-var-file #{var_file_path}",
-            @tf_dir
+            "-var-file #{var_file_path}"
           ].join(' ')
 
           terraform_runner(cmd)
@@ -219,7 +216,6 @@ module TFWrapper
         ] do |_t, args|
           cmd = cmd_with_targets(
             ['terraform', 'destroy', '-force', "-var-file #{var_file_path}"],
-            [@tf_dir],
             args[:target],
             args.extras
           )
@@ -343,19 +339,16 @@ module TFWrapper
     # @param cmd_array [Array] array of the beginning parts of the terraform
     #   command; usually something like:
     #   ['terraform', 'ACTION', '-var'file', 'VAR_FILE_PATH']
-    # @param suffix_array [Array] array of the end parts of the terraform
-    #   command; usually just the path to the TF config directory
     # @param target [String] the first target parameter given to the Rake
     #   task, or nil.
     # @param extras [Array] array of additional target parameters given to the
     #   Rake task, or nil.
-    def cmd_with_targets(cmd_array, suffix_array, target, extras)
+    def cmd_with_targets(cmd_array, target, extras)
       final_arr = cmd_array
       final_arr.concat(['-target', target]) unless target.nil?
       # rubocop:disable Style/SafeNavigation
       extras.each { |e| final_arr.concat(['-target', e]) } unless extras.nil?
       # rubocop:enable Style/SafeNavigation
-      final_arr.concat(suffix_array)
       final_arr.join(' ')
     end
   end
