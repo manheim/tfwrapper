@@ -41,12 +41,6 @@ Add to your ``Gemfile``:
 gem 'tfwrapper', '~> 0.1.0'
 ```
 
-__Important:__ Terraform 0.9 [was just released]](https://www.hashicorp.com/blog/terraform-0-9/)
-and makes some relatively major changes to how remote state is managed, including
-removal of the ``terraform remote`` command. We wanted to release this Gem relatively
-unmodified from our internal code, so it can be useful to others. However, please be sure
-to specify a version of ``~> 0.1.0``, as we expect an incompatible 0.2.0 release soon.
-
 ## Usage
 
 To use the TerraForm rake tasks, require the module in your Rakefile and use the
