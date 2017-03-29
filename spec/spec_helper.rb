@@ -4,6 +4,9 @@ require 'simplecov'
 require 'simplecov-console'
 require 'rspec_junit_formatter'
 
+ENV['CONSUL_ADDR'] ||= '127.0.0.1:8500'
+ENV['CONSUL_URL']  ||= "http://#{ENV['CONSUL_ADDR']}"
+
 # for naming coverage and test results in CircleCI by ruby version tested
 dir_suffix = ''
 if ENV['GEM_HOME']

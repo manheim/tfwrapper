@@ -20,4 +20,5 @@ test:
     - 'rvm 2.1.8 exec bundle exec rake spec:unit'
     - 'rvm 2.2.5 exec bundle exec rake spec:unit'
     - 'rvm 2.3.1 exec bundle exec rake spec:unit'
+    - 'rvm 2.3.1 exec bundle exec rake spec:acceptance'
     - 'bundle exec rake yard:generate'
