@@ -114,7 +114,6 @@ module TFWrapper
         desc 'Download and install modules for the configuration'
         task :get do
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
-          tf_clean
           # output the terraform version for logging purposes
           terraform_runner('terraform -version')
           terraform_runner("terraform get #{@tf_dir}")
@@ -310,18 +309,6 @@ module TFWrapper
       STDERR.puts "terraform_runner command '#{cmd}' finished and exited 0"
     end
     # rubocop:enable Metrics/PerceivedComplexity
-
-    # clean any local TF state
-    def tf_clean
-      require 'fileutils'
-      if File.exist?('.terraform')
-        puts 'Removing .terraform/'
-        FileUtils.rm_rf('.terraform')
-      end
-      return unless File.exist?("#{@tf_dir}/.terraform")
-      puts "Removing #{@tf_dir}/.terraform"
-      FileUtils.rm_rf("#{@tf_dir}/.terraform")
-    end
 
     # update stack status in Consul
     def update_consul_stack_env_vars

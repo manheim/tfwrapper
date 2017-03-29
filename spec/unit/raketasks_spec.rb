@@ -281,11 +281,9 @@ describe TFWrapper::RakeTasks do
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
-      allow(subject).to receive(:tf_clean)
       allow(subject).to receive(:terraform_runner)
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.with(vars.values)
-      expect(subject).to receive(:tf_clean).once
       expect(subject).to receive(:terraform_runner)
         .once.ordered.with('terraform -version')
       expect(subject).to receive(:terraform_runner)
@@ -732,28 +730,6 @@ describe TFWrapper::RakeTasks do
         .with('terraform_runner command: \'foo\'')
       expect { subject.terraform_runner('foo') }
         .to raise_error('Errors have occurred executing: \'foo\' (exited 1)')
-    end
-  end
-  describe '#tf_clean' do
-    it 'deletes directories if present' do
-      expect(STDOUT).to receive(:puts).with('Removing .terraform/')
-      expect(STDOUT).to receive(:puts).with('Removing tfdir/.terraform')
-      expect(File).to receive(:exist?).with('.terraform').and_return(true)
-      expect(File).to receive(:exist?).with('tfdir/.terraform')
-        .and_return(true)
-      expect(FileUtils).to receive(:rm_rf).with('.terraform')
-      expect(FileUtils).to receive(:rm_rf).with('tfdir/.terraform')
-      subject.tf_clean
-    end
-    it 'does not delete if not present' do
-      expect(STDOUT).to_not receive(:puts).with('Removing .terraform/')
-      expect(STDOUT).to_not receive(:puts).with('Removing tfdir/.terraform')
-      expect(File).to receive(:exist?).with('.terraform').and_return(false)
-      expect(File).to receive(:exist?).with('tfdir/.terraform')
-        .and_return(false)
-      expect(FileUtils).to_not receive(:rm_rf).with('.terraform')
-      expect(FileUtils).to_not receive(:rm_rf).with('tfdir/.terraform')
-      subject.tf_clean
     end
   end
   describe '#update_consul_stack_env_vars' do
