@@ -47,15 +47,12 @@ module TFWrapper
     #   (required) environment variables to populate their values from
     # @option opts [Hash] :tf_extra_vars hash of Terraform variables to their
     #   values; overrides any same-named keys in ``tf_vars_from_env``
-    # @option opts [String] :remote_backend_name name of the Terraform remote
-    #   state storage backend; defaults to "consul"
     def initialize(tf_dir, opts = {})
       @tf_dir = tf_dir
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
-      @backend_name = opts.fetch(:remote_backend_name, 'consul')
       @backend_config = opts.fetch(:backend_config, {})
     end
 
@@ -78,9 +75,9 @@ module TFWrapper
       install_write_tf_vars
     end
 
-    # add the 'tf:init' Rake task. This uses the backend name from
-    # ``@remote_backend_name`` and sets ``-backend-config='k=v'`` for every
-    # k, v in ``@backend_config``.
+    # add the 'tf:init' Rake task. This checks environment variables,
+    # runs ``terraform -version``, and then runs ``terraform init`` with
+    # the ``backend_config`` options, if any.
     def install_init
       namespace nsprefix do
         desc 'Run terraform init with appropriate arguments'

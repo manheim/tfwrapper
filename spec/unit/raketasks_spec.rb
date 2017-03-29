@@ -47,7 +47,6 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
-      expect(cls.instance_variable_get('@backend_name')).to eq('consul')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
     end
     it 'sets options' do
@@ -66,7 +65,6 @@ describe TFWrapper::RakeTasks do
         .to eq('foo' => 'bar')
       expect(cls.instance_variable_get('@tf_extra_vars'))
         .to eq('baz' => 'blam')
-      expect(cls.instance_variable_get('@backend_name')).to eq('consul')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
     end
   end
