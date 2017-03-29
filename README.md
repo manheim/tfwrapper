@@ -173,16 +173,6 @@ TFWrapper::RakeTasks.install_tasks(
 )
 ```
 
-#### Output Buffering
-
-If you wish to have STDOUT and STDERR from the Terraform commands run by the Rake tasks stream to the console as they run,
-you will need to disable output buffering at the beginning of your Rakefile:
-
-```ruby
-STDOUT.sync = true
-STDERR.sync = true
-```
-
 ## Development
 
 1. ``bundle install --path vendor``
