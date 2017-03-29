@@ -50,6 +50,7 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
+      expect(cls.instance_variable_get('@consul_url')).to eq(nil)
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
@@ -58,7 +59,8 @@ describe TFWrapper::RakeTasks do
         'tfdir',
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
-        tf_extra_vars: { 'baz' => 'blam' }
+        tf_extra_vars: { 'baz' => 'blam' },
+        consul_url: 'foobar'
       )
       expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix'))
@@ -68,6 +70,21 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_extra_vars'))
         .to eq('baz' => 'blam')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
+      expect(cls.instance_variable_get('@consul_url')).to eq('foobar')
+    end
+    context 'when consul_url is nil but consul_env_vars_prefix is not' do
+      it 'raises an error' do
+        expect {
+          TFWrapper::RakeTasks.new(
+            'tfdir',
+            consul_env_vars_prefix: 'cvprefix',
+            tf_vars_from_env: { 'foo' => 'bar' }
+          )
+        }.to raise_error(
+          StandardError,
+          'Cannot set env vars in Consul when consul_url option is nil.'
+        )
+      end
     end
   end
   describe '#nsprefix' do
@@ -732,28 +749,41 @@ describe TFWrapper::RakeTasks do
     end
   end
   describe '#update_consul_stack_env_vars' do
-    it 'saves the variables in Consul' do
-      vars = { 'foo' => 'bar', 'baz' => 'blam' }
-      expected = { 'bar' => 'barVal', 'blam' => 'blamVal' }
-      subject.instance_variable_set('@tf_vars_from_env', vars)
-      subject.instance_variable_set('@consul_env_vars_prefix', 'my/prefix')
-      dbl_config = double
-      allow(dbl_config).to receive(:url=)
-      allow(Diplomat).to receive(:configure).and_yield(dbl_config)
-      allow(ENV).to receive(:[])
-      allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
-      allow(ENV).to receive(:[]).with('bar').and_return('barVal')
-      allow(ENV).to receive(:[]).with('blam').and_return('blamVal')
-      allow(Diplomat::Kv).to receive(:put)
+    context 'when @consul_url is nil' do
+      it 'raises an error' do
 
-      expect(Diplomat).to receive(:configure).once
-      expect(dbl_config).to receive(:url=).once.with('http://chost')
-      expect(STDOUT).to receive(:puts).once
-        .with('Writing stack information to Consul at my/prefix')
-      expect(STDOUT).to receive(:puts).once.with(JSON.pretty_generate(expected))
-      expect(Diplomat::Kv).to receive(:put)
-        .once.with('my/prefix', JSON.generate(expected))
-      subject.update_consul_stack_env_vars
+      end
+    end
+    context 'when @consul_env_vars_prefix is nil' do
+      it 'raises an error' do
+
+      end
+    end
+    context 'when @consul_url and @consul_env_vars_prefix are specified' do
+      it 'saves the variables in Consul' do
+        vars = { 'foo' => 'bar', 'baz' => 'blam' }
+        expected = { 'bar' => 'barVal', 'blam' => 'blamVal' }
+        subject.instance_variable_set('@tf_vars_from_env', vars)
+        subject.instance_variable_set('@consul_url', 'foo://bar')
+        subject.instance_variable_set('@consul_env_vars_prefix', 'my/prefix')
+        dbl_config = double
+        allow(dbl_config).to receive(:url=)
+        allow(Diplomat).to receive(:configure).and_yield(dbl_config)
+        allow(ENV).to receive(:[])
+        allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
+        allow(ENV).to receive(:[]).with('bar').and_return('barVal')
+        allow(ENV).to receive(:[]).with('blam').and_return('blamVal')
+        allow(Diplomat::Kv).to receive(:put)
+
+        expect(Diplomat).to receive(:configure).once
+        expect(dbl_config).to receive(:url=).once.with('foo://bar')
+        expect(STDOUT).to receive(:puts).once
+          .with('Writing stack information to foo://bar at: my/prefix')
+        expect(STDOUT).to receive(:puts).once.with(JSON.pretty_generate(expected))
+        expect(Diplomat::Kv).to receive(:put)
+          .once.with('my/prefix', JSON.generate(expected))
+        subject.update_consul_stack_env_vars
+      end
     end
   end
   describe '#cmd_with_targets' do

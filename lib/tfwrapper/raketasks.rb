@@ -45,14 +45,16 @@ module TFWrapper
     #   will put all tasks in a "#{namespace_prefix}_tf:" namespace instead
     #   of "tf:". This allows using manheim_helpers for multiple terraform
     #   configurations in the same Rakefile.
-    # @option opts [String] :consul_env_vars_prefix if specified and not nil,
-    #   write the environment variables used from ``tf_vars_from_env``
-    #   and their values  to JSON at this path in Consul. This should have
-    #   the same naming constraints as ``consul_prefix``.
     # @option opts [Hash] :tf_vars_from_env hash of Terraform variables to the
     #   (required) environment variables to populate their values from
     # @option opts [Hash] :tf_extra_vars hash of Terraform variables to their
     #   values; overrides any same-named keys in ``tf_vars_from_env``
+    # @option opts [String] :consul_url URL to access Consul at, for the
+    #   ``:consul_env_vars_prefix`` option.
+    # @option opts [String] :consul_env_vars_prefix if specified and not nil,
+    #   write the environment variables used from ``tf_vars_from_env``
+    #   and their values to JSON at this path in Consul. This should have
+    #   the same naming constraints as ``consul_prefix``.
     def initialize(tf_dir, opts = {})
       @tf_dir = tf_dir
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
@@ -60,6 +62,9 @@ module TFWrapper
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
+      @consul_url = opts.fetch(:consul_url, nil)
+      raise StandardError, 'Cannot set env vars in Consul when consul_url ' \
+        'option is nil.' if @consul_url.nil? && !@consul_env_vars_prefix.nil?
     end
 
     def nsprefix
@@ -298,10 +303,11 @@ module TFWrapper
       @tf_vars_from_env.values.each { |k| data[k] = ENV[k] }
 
       Diplomat.configure do |config|
-        config.url = "http://#{ENV['CONSUL_HOST']}"
+        config.url = @consul_url
       end
 
-      puts "Writing stack information to Consul at #{@consul_env_vars_prefix}"
+      puts "Writing stack information to #{@consul_url} at: "\
+        "#{@consul_env_vars_prefix}"
       puts JSON.pretty_generate(data)
       raw = JSON.generate(data)
       Diplomat::Kv.put(@consul_env_vars_prefix, raw)
