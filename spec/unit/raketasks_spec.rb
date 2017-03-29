@@ -161,8 +161,7 @@ describe TFWrapper::RakeTasks do
     context 'jobs' do
       let(:tasknames) do
         %w(
-          get
-          set_remote
+          init
           plan
           apply
           refresh
@@ -243,15 +242,13 @@ describe TFWrapper::RakeTasks do
   end
   describe '#install' do
     it 'calls the install methods' do
-      allow(subject).to receive(:install_get)
-      allow(subject).to receive(:install_set_remote)
+      allow(subject).to receive(:install_init)
       allow(subject).to receive(:install_plan)
       allow(subject).to receive(:install_apply)
       allow(subject).to receive(:install_refresh)
       allow(subject).to receive(:install_destroy)
       allow(subject).to receive(:install_write_tf_vars)
-      expect(subject).to receive(:install_get).once
-      expect(subject).to receive(:install_set_remote).once
+      expect(subject).to receive(:install_init).once
       expect(subject).to receive(:install_plan).once
       expect(subject).to receive(:install_apply).once
       expect(subject).to receive(:install_refresh).once
@@ -260,7 +257,7 @@ describe TFWrapper::RakeTasks do
       subject.install
     end
   end
-  describe '#install_get' do
+  describe '#install_init' do
     # these let/before/after come from bundler's gem_helper_spec.rb
     let!(:rake_application) { Rake.application }
     before(:each) do
@@ -271,48 +268,18 @@ describe TFWrapper::RakeTasks do
       Rake.application = rake_application
     end
     before do
-      subject.install_get
+      subject.install_init
     end
 
-    it 'adds the get task' do
-      expect(Rake.application['tf:get']).to be_instance_of(Rake::Task)
+    it 'adds the init task' do
+      expect(Rake.application['tf:init']).to be_instance_of(Rake::Task)
     end
-    it 'runs the get command' do
+    it 'runs the init command with backend_config options' do
+      Rake.application['tf:init'].clear_prerequisites
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
-      allow(subject).to receive(:terraform_runner)
-      expect(TFWrapper::Helpers)
-        .to receive(:check_env_vars).once.with(vars.values)
-      expect(subject).to receive(:terraform_runner)
-        .once.ordered.with('terraform -version')
-      expect(subject).to receive(:terraform_runner)
-        .once.ordered.with('terraform get')
-      Rake.application['tf:get'].invoke
-    end
-  end
-  describe '#install_set_remote' do
-    # these let/before/after come from bundler's gem_helper_spec.rb
-    let!(:rake_application) { Rake.application }
-    before(:each) do
-      Rake::Task.clear
-      Rake.application = Rake::Application.new
-    end
-    after(:each) do
-      Rake.application = rake_application
-    end
-    before do
-      subject.install_set_remote
-    end
-
-    it 'adds the set_remote task' do
-      expect(Rake.application['tf:set_remote']).to be_instance_of(Rake::Task)
-      expect(Rake.application['tf:set_remote'].prerequisites).to eq(['tf:get'])
-    end
-    it 'runs the set_remote command' do
-      Rake.application['tf:set_remote'].clear_prerequisites
       allow(ENV).to receive(:[])
-      subject.instance_variable_set('@backend_name', 'mybackend')
       subject.instance_variable_set(
         '@backend_config',
         'address' => 'chost',
@@ -320,11 +287,32 @@ describe TFWrapper::RakeTasks do
         'foo'     => 'bar'
       )
       allow(subject).to receive(:terraform_runner)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform remote config -backend=mybackend -backend-config=' \
-        '\'address=chost\' -backend-config=\'path=consulprefix\' '\
-        '-backend-config=\'foo=bar\'')
-      Rake.application['tf:set_remote'].invoke
+      expect(TFWrapper::Helpers)
+        .to receive(:check_env_vars).once.with(vars.values)
+      expect(subject).to receive(:terraform_runner).once.ordered
+        .with('terraform -version')
+      expect(subject).to receive(:terraform_runner).once.ordered
+        .with('terraform init -input=false '\
+        '-backend-config=\'address=chost\'' \
+        ' -backend-config=\'path=consulprefix\''\
+        ' -backend-config=\'foo=bar\'')
+      Rake.application['tf:init'].invoke
+    end
+    it 'runs the init command without backend_config options' do
+      Rake.application['tf:init'].clear_prerequisites
+      vars = { foo: 'bar', baz: 'blam' }
+      subject.instance_variable_set('@tf_vars_from_env', vars)
+      allow(TFWrapper::Helpers).to receive(:check_env_vars)
+      allow(ENV).to receive(:[])
+      subject.instance_variable_set('@backend_config', {})
+      allow(subject).to receive(:terraform_runner)
+      expect(TFWrapper::Helpers)
+        .to receive(:check_env_vars).once.with(vars.values)
+      expect(subject).to receive(:terraform_runner).once.ordered
+        .with('terraform -version')
+      expect(subject).to receive(:terraform_runner).once.ordered
+        .with('terraform init -input=false')
+      Rake.application['tf:init'].invoke
     end
   end
   describe '#install_plan' do

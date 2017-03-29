@@ -69,8 +69,8 @@ module TFWrapper
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_name = opts.fetch(:remote_backend_name, 'consul')
-      @backend_config = opts.fetch(:backend_config, nil)
-      return unless @backend_config.nil?
+      @backend_config = opts.fetch(:backend_config, {})
+      return unless @backend_config.empty?
       if @backend_name == 'consul'
         @backend_config = {
           'address' => ENV['CONSUL_HOST'],
@@ -101,8 +101,7 @@ module TFWrapper
     # install all Rake tasks - calls other install_* methods
     # rubocop:disable Metrics/CyclomaticComplexity
     def install
-      install_get
-      install_set_remote
+      install_init
       install_plan
       install_apply
       install_refresh
@@ -110,32 +109,24 @@ module TFWrapper
       install_write_tf_vars
     end
 
-    # add the 'tf:get' Rake task
-    def install_get
+    # add the 'tf:init' Rake task. This uses the backend name from
+    # ``@remote_backend_name`` and sets ``-backend-config='k=v'`` for every
+    # k, v in ``@backend_config``.
+    def install_init
       namespace nsprefix do
-        desc 'Download and install modules for the configuration'
-        task :get do
+        desc 'Run terraform init with appropriate arguments'
+        task :init do
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
           # output the terraform version for logging purposes
           terraform_runner('terraform -version')
-          terraform_runner("terraform get")
-        end
-      end
-    end
-
-    # add the 'tf:set_remote' Rake task. This uses the backend name from
-    # ``@remote_backend_name`` and sets ``-backend-config='k=v'`` for every
-    # k, v in ``@backend_config``.
-    def install_set_remote
-      namespace nsprefix do
-        desc 'Configure a remote backend for terraform state files ' \
-          '(internal use only)'
-        task set_remote: [:"#{nsprefix}:get"] do
+          # the version will be a string like:
+          # Terraform v0.9.2
+          # or:
+          # Terraform v0.9.3-dev (<GIT SHA><+CHANGES>)
           cmd = [
             'terraform',
-            'remote',
-            'config',
-            "-backend=#{@backend_name}"
+            'init',
+            "-input=false"
           ].join(' ')
           @backend_config.each do |k, v|
             cmd = cmd + ' ' + "-backend-config='#{k}=#{v}'"
