@@ -152,12 +152,19 @@ describe TFWrapper::RakeTasks do
   describe '#var_file_path' do
     context 'return value' do
       it 'returns default if namespace_prefix nil' do
+        allow(File).to receive(:absolute_path)
+          .and_return('/foo/build.tfvars.json')
+        expect(File).to receive(:absolute_path).once.with('build.tfvars.json')
         subject.instance_variable_set('@ns_prefix', nil)
-        expect(subject.var_file_path).to eq('build.tfvars.json')
+        expect(subject.var_file_path).to eq('/foo/build.tfvars.json')
       end
       it 'prefixes if namespace_prefix is not nill' do
+        allow(File).to receive(:absolute_path)
+          .and_return('/foo/foo_build.tfvars.json')
         subject.instance_variable_set('@ns_prefix', 'foo')
-        expect(subject.var_file_path).to eq('foo_build.tfvars.json')
+        expect(File).to receive(:absolute_path).once
+          .with('foo_build.tfvars.json')
+        expect(subject.var_file_path).to eq('/foo/foo_build.tfvars.json')
       end
     end
   end
@@ -258,24 +265,27 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the plan command with no targets' do
       Rake.application['tf:plan'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform plan -var-file build.tfvars.json')
+        .with('terraform plan -var-file file.tfvars.json')
       Rake.application['tf:plan'].invoke
     end
     it 'runs the plan command with one target' do
       Rake.application['tf:plan'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform plan -var-file build.tfvars.json ' \
+        .with('terraform plan -var-file file.tfvars.json ' \
               '-target tar.get[1]')
       Rake.application['tf:plan'].invoke('tar.get[1]')
     end
     it 'runs the plan command with three targets' do
       Rake.application['tf:plan'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform plan -var-file build.tfvars.json ' \
+        .with('terraform plan -var-file file.tfvars.json ' \
               '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:plan'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
@@ -304,26 +314,29 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the apply command with no targets' do
       Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json')
+        .with('terraform apply -var-file file.tfvars.json')
       expect(subject).to_not receive(:update_consul_stack_env_vars)
       Rake.application['tf:apply'].invoke
     end
     it 'runs the apply command with one target' do
       Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json ' \
+        .with('terraform apply -var-file file.tfvars.json ' \
               '-target tar.get[1]')
       Rake.application['tf:apply'].invoke('tar.get[1]')
     end
     it 'runs the apply command with three targets' do
       Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json ' \
+        .with('terraform apply -var-file file.tfvars.json ' \
               '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:apply'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
@@ -332,10 +345,11 @@ describe TFWrapper::RakeTasks do
     it 'runs update_consul_stack_env_vars if consul_env_vars_prefix not nil' do
       subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
       Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file build.tfvars.json')
+        .with('terraform apply -var-file file.tfvars.json')
       expect(subject).to receive(:update_consul_stack_env_vars).once
       Rake.application['tf:apply'].invoke
     end
@@ -361,9 +375,10 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the refresh command' do
       Rake.application['tf:refresh'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform refresh -var-file build.tfvars.json')
+        .with('terraform refresh -var-file file.tfvars.json')
       Rake.application['tf:refresh'].invoke
     end
   end
@@ -389,24 +404,27 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the destroy command with no targets' do
       Rake.application['tf:destroy'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform destroy -force -var-file build.tfvars.json')
+        .with('terraform destroy -force -var-file file.tfvars.json')
       Rake.application['tf:destroy'].invoke
     end
     it 'runs the destroy command with one target' do
       Rake.application['tf:destroy'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform destroy -force -var-file build.tfvars.json ' \
+        .with('terraform destroy -force -var-file file.tfvars.json ' \
               '-target tar.get[1]')
       Rake.application['tf:destroy'].invoke('tar.get[1]')
     end
     it 'runs the destroy command with three targets' do
       Rake.application['tf:destroy'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform destroy -force -var-file build.tfvars.json ' \
+        .with('terraform destroy -force -var-file file.tfvars.json ' \
               '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:destroy'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
@@ -440,6 +458,7 @@ describe TFWrapper::RakeTasks do
           'aws_access_key' => 'ak'
         }
         allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
         f_dbl = double(File)
         allow(File).to receive(:open).and_yield(f_dbl)
         allow(f_dbl).to receive(:write)
@@ -450,10 +469,10 @@ describe TFWrapper::RakeTasks do
           .once.with('aws_access_key => (redacted)')
         expect(STDOUT).to receive(:puts).once.with('baz => blam')
         expect(STDOUT).to receive(:puts).once.with('foo => bar')
-        expect(File).to receive(:open).once.with('build.tfvars.json', 'w')
+        expect(File).to receive(:open).once.with('file.tfvars.json', 'w')
         expect(f_dbl).to receive(:write).once.with(vars.to_json)
         expect(STDERR).to receive(:puts)
-          .once.with('Terraform vars written to: build.tfvars.json')
+          .once.with('Terraform vars written to: file.tfvars.json')
         Rake.application['tf:write_tf_vars'].invoke
       end
     end
@@ -483,6 +502,8 @@ describe TFWrapper::RakeTasks do
           'aws_access_key' => 'ak'
         }
         allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path)
+          .and_return('foo_file.tfvars.json')
         f_dbl = double(File)
         allow(File).to receive(:open).and_yield(f_dbl)
         allow(f_dbl).to receive(:write)
@@ -493,10 +514,10 @@ describe TFWrapper::RakeTasks do
           .once.with('aws_access_key => (redacted)')
         expect(STDOUT).to receive(:puts).once.with('baz => blam')
         expect(STDOUT).to receive(:puts).once.with('foo => bar')
-        expect(File).to receive(:open).once.with('foo_build.tfvars.json', 'w')
+        expect(File).to receive(:open).once.with('foo_file.tfvars.json', 'w')
         expect(f_dbl).to receive(:write).once.with(vars.to_json)
         expect(STDERR).to receive(:puts)
-          .once.with('Terraform vars written to: foo_build.tfvars.json')
+          .once.with('Terraform vars written to: foo_file.tfvars.json')
         Rake.application['foo_tf:write_tf_vars'].invoke
       end
     end

@@ -184,9 +184,9 @@ module TFWrapper
 
     def var_file_path
       if @ns_prefix.nil?
-        'build.tfvars.json'
+        File.absolute_path('build.tfvars.json')
       else
-        "#{@ns_prefix}_build.tfvars.json"
+        File.absolute_path("#{@ns_prefix}_build.tfvars.json")
       end
     end
 
