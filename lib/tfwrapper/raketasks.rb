@@ -19,8 +19,8 @@ module TFWrapper
       # Install the Rake tasks for working with Terraform at Manheim.
       #
       # @param (see #initialize)
-      def install_tasks(tf_dir, remote_prefix, opts = {})
-        new(tf_dir, remote_prefix, opts).install
+      def install_tasks(tf_dir, opts = {})
+        new(tf_dir, opts).install
       end
     end
 
@@ -29,12 +29,12 @@ module TFWrapper
     # @param tf_dir [String] TerraForm config directory, relative to Rakefile.
     #   Set to '.' if the Rakefile is in the same directory as the ``.tf``
     #   configuration files.
-    # @param remote_prefix [String] path/key to store the Terraform saved
-    #   state in Consul. You __must__ be sure that this will be unique
-    #   per environment; it should include environment, application,
-    #   component, etc. If you set opts[:remote_backend_name] to something
-    #   other than "consul", this value is ignored.
     # @param [Hash] options to use when adding tasks
+    # @option opts [Hash] :backend_config hash of Terraform remote state
+    #   backend configuration options, to override or supplement those in
+    #   the terraform configuration. See the
+    #   [Remote State](https://www.terraform.io/docs/state/remote.html)
+    #   documentation for further information.
     # @option opts [String] :namespace_prefix if specified and not nil, this
     #   will put all tasks in a "#{namespace_prefix}_tf:" namespace instead
     #   of "tf:". This allows using manheim_helpers for multiple terraform
@@ -49,45 +49,14 @@ module TFWrapper
     #   values; overrides any same-named keys in ``tf_vars_from_env``
     # @option opts [String] :remote_backend_name name of the Terraform remote
     #   state storage backend; defaults to "consul"
-    # @option opts [Hash] :backend_config hash of Terraform remote state
-    #   backend configuration options
-    #   if :remote_backend_name == "consul", this defaults to:
-    #     { 'address' => ENV['CONSUL_HOST'],
-    #       'path' => @consul_prefix
-    #     }
-    #   if :remote_backend_name == "s3", this defaults to:
-    #     { 'bucket' => 'manheim-re',
-    #       'key'   => 'terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}' \
-    #                      '/consul/terraform.tfstate',
-    #       'region' => 'us-east-1'
-    #     }
-    def initialize(tf_dir, remote_prefix, opts = {})
+    def initialize(tf_dir, opts = {})
       @tf_dir = tf_dir
-      @remote_prefix = remote_prefix
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_name = opts.fetch(:remote_backend_name, 'consul')
       @backend_config = opts.fetch(:backend_config, {})
-      return unless @backend_config.empty?
-      if @backend_name == 'consul'
-        @backend_config = {
-          'address' => ENV['CONSUL_HOST'],
-          'path' => @remote_prefix
-        }
-      elsif @backend_name == 's3'
-        @backend_config = {
-          'bucket' => 'manheim-re',
-          'key'    => "terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}" \
-                      '/terraform.tfstate',
-          'region' => 'us-east-1'
-        }
-      else
-        raise StandardError, 'You must specify opts[:backend_config] ' \
-          "when using a remote_backend_name other than 'consul' or 's3'" \
-          " (#{@backend_name})"
-      end
     end
 
     def nsprefix

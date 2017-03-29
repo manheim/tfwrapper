@@ -8,7 +8,7 @@ require 'diplomat'
 
 describe TFWrapper::RakeTasks do
   subject do
-    TFWrapper::RakeTasks.new('tfdir', 'consulprefix')
+    TFWrapper::RakeTasks.new('tfdir')
   end
   describe '#install_tasks' do
     it 'calls constructor without opts if none are passed' do
@@ -18,11 +18,9 @@ describe TFWrapper::RakeTasks do
       allow(dbl).to receive(:install)
 
       expect(TFWrapper::RakeTasks).to receive(:new).once
-        .with('tfdir', 'consulprefix', {})
+        .with('tfdir', {})
       expect(dbl).to receive(:install).once
-      TFWrapper::RakeTasks.install_tasks(
-        'tfdir', 'consulprefix'
-      )
+      TFWrapper::RakeTasks.install_tasks('tfdir')
     end
     it 'passes opts to constructor' do
       dbl = double(TFWrapper::RakeTasks)
@@ -31,10 +29,10 @@ describe TFWrapper::RakeTasks do
       allow(dbl).to receive(:install)
 
       expect(TFWrapper::RakeTasks).to receive(:new).once
-        .with('tfdir', 'consulprefix', tf_vars_from_env: { 'foo' => 'bar' })
+        .with('tfdir', tf_vars_from_env: { 'foo' => 'bar' })
       expect(dbl).to receive(:install).once
       TFWrapper::RakeTasks.install_tasks(
-        'tfdir', 'consulprefix', tf_vars_from_env: { 'foo' => 'bar' }
+        'tfdir', tf_vars_from_env: { 'foo' => 'bar' }
       )
     end
   end
@@ -44,30 +42,24 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
       allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
       allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
-      cls = TFWrapper::RakeTasks.new('tfdir', 'consulpath')
+      cls = TFWrapper::RakeTasks.new('tfdir')
       expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
-      expect(cls.instance_variable_get('@remote_prefix')).to eq('consulpath')
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_name')).to eq('consul')
-      expect(cls.instance_variable_get('@backend_config')).to eq(
-        'address' => 'chost',
-        'path'    => 'consulpath'
-      )
+      expect(cls.instance_variable_get('@backend_config')).to eq({})
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
       cls = TFWrapper::RakeTasks.new(
         'tfdir',
-        'consulpath',
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
         tf_extra_vars: { 'baz' => 'blam' }
       )
       expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
-      expect(cls.instance_variable_get('@remote_prefix')).to eq('consulpath')
       expect(cls.instance_variable_get('@consul_env_vars_prefix'))
         .to eq('cvprefix')
       expect(cls.instance_variable_get('@tf_vars_from_env'))
@@ -75,76 +67,7 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_extra_vars'))
         .to eq('baz' => 'blam')
       expect(cls.instance_variable_get('@backend_name')).to eq('consul')
-      expect(cls.instance_variable_get('@backend_config')).to eq(
-        'address' => 'chost',
-        'path'    => 'consulpath'
-      )
-    end
-    it 'sets default backend_config for s3' do
-      allow(ENV).to receive(:[])
-      allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
-      allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
-      cls = TFWrapper::RakeTasks.new(
-        'tfdir',
-        '',
-        remote_backend_name: 's3'
-      )
-      expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
-      expect(cls.instance_variable_get('@remote_prefix')).to eq('')
-      expect(cls.instance_variable_get('@backend_name')).to eq('s3')
-      expect(cls.instance_variable_get('@backend_config')).to eq(
-        'bucket' => 'manheim-re',
-        'key'    => 'terraform/myproj/myenv/terraform.tfstate',
-        'region' => 'us-east-1'
-      )
-    end
-    it 'passes through custom backend_config for s3' do
-      allow(ENV).to receive(:[])
-      cls = TFWrapper::RakeTasks.new(
-        'tfdir',
-        '',
-        remote_backend_name: 's3',
-        backend_config: { 'foo' => 'bar', 'baz' => 'blam' }
-      )
-      expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
-      expect(cls.instance_variable_get('@remote_prefix')).to eq('')
-      expect(cls.instance_variable_get('@backend_name')).to eq('s3')
-      expect(cls.instance_variable_get('@backend_config')).to eq(
-        'foo' => 'bar',
-        'baz' => 'blam'
-      )
-    end
-    it 'passes through custom backend_config for custom backend' do
-      allow(ENV).to receive(:[])
-      allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
-      allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
-      cls = TFWrapper::RakeTasks.new(
-        'tfdir',
-        '',
-        remote_backend_name: 'foo',
-        backend_config: { 'foo' => 'bar', 'baz' => 'blam' }
-      )
-      expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
-      expect(cls.instance_variable_get('@remote_prefix')).to eq('')
-      expect(cls.instance_variable_get('@backend_name')).to eq('foo')
-      expect(cls.instance_variable_get('@backend_config')).to eq(
-        'foo' => 'bar',
-        'baz' => 'blam'
-      )
-    end
-    it 'raises if no backend_config for other backend name' do
-      allow(ENV).to receive(:[])
-      allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
-      allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
-      expect do
-        TFWrapper::RakeTasks.new(
-          'tfdir',
-          '',
-          remote_backend_name: 'foobar'
-        )
-      end.to raise_error(StandardError, 'You must specify opts[:backend_confi' \
-        'g] when using a remote_backend_name other than \'consul\' or ' \
-        '\'s3\' (foobar)')
+      expect(cls.instance_variable_get('@backend_config')).to eq({})
     end
   end
   describe '#nsprefix' do
