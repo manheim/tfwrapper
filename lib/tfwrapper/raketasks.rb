@@ -108,7 +108,7 @@ module TFWrapper
         desc 'Output the set plan to be executed by apply; specify ' \
           'optional CSV targets'
         task :plan, [:target] => [
-          :"#{nsprefix}:set_remote",
+          :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
         ] do |_t, args|
           cmd = cmd_with_targets(
@@ -128,7 +128,7 @@ module TFWrapper
         desc 'Apply a terraform plan that will provision your resources; ' \
           'specify optional CSV targets'
         task :apply, [:target] => [
-          :"#{nsprefix}:set_remote",
+          :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars",
           :"#{nsprefix}:plan"
         ] do |_t, args|
@@ -148,7 +148,7 @@ module TFWrapper
     def install_refresh
       namespace nsprefix do
         task refresh: [
-          :"#{nsprefix}:set_remote",
+          :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
         ] do
           cmd = [
@@ -168,7 +168,7 @@ module TFWrapper
         desc 'Destroy any live resources that are tracked by your state ' \
           'files; specify optional CSV targets'
         task :destroy, [:target] => [
-          :"#{nsprefix}:set_remote",
+          :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
         ] do |_t, args|
           cmd = cmd_with_targets(

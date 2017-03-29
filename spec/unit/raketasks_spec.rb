@@ -260,7 +260,7 @@ describe TFWrapper::RakeTasks do
     it 'adds the plan task' do
       expect(Rake.application['tf:plan']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:plan'].prerequisites)
-        .to eq(%w(tf:set_remote tf:write_tf_vars))
+        .to eq(%w(tf:init tf:write_tf_vars))
       expect(Rake.application['tf:plan'].arg_names).to eq([:target])
     end
     it 'runs the plan command with no targets' do
@@ -309,7 +309,7 @@ describe TFWrapper::RakeTasks do
     it 'adds the apply task' do
       expect(Rake.application['tf:apply']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:apply'].prerequisites)
-        .to eq(%w(tf:set_remote tf:write_tf_vars tf:plan))
+        .to eq(%w(tf:init tf:write_tf_vars tf:plan))
       expect(Rake.application['tf:apply'].arg_names).to eq([:target])
     end
     it 'runs the apply command with no targets' do
@@ -371,7 +371,7 @@ describe TFWrapper::RakeTasks do
     it 'adds the refresh task' do
       expect(Rake.application['tf:refresh']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:refresh'].prerequisites)
-        .to eq(%w(tf:set_remote tf:write_tf_vars))
+        .to eq(%w(tf:init tf:write_tf_vars))
     end
     it 'runs the refresh command' do
       Rake.application['tf:refresh'].clear_prerequisites
@@ -399,7 +399,7 @@ describe TFWrapper::RakeTasks do
     it 'adds the destroy task' do
       expect(Rake.application['tf:destroy']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:destroy'].prerequisites)
-        .to eq(%w(tf:set_remote tf:write_tf_vars))
+        .to eq(%w(tf:init tf:write_tf_vars))
       expect(Rake.application['tf:destroy'].arg_names).to eq([:target])
     end
     it 'runs the destroy command with no targets' do
