@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'tfwrapper/helpers'
 require 'json'
 require 'rake'
@@ -63,8 +64,12 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
-      raise StandardError, 'Cannot set env vars in Consul when consul_url ' \
-        'option is nil.' if @consul_url.nil? && !@consul_env_vars_prefix.nil?
+      # rubocop:disable Style/GuardClause
+      if @consul_url.nil? && !@consul_env_vars_prefix.nil?
+        raise StandardError, 'Cannot set env vars in Consul when consul_url ' \
+          'option is nil.'
+      end
+      # rubocop:enable Style/GuardClause
     end
 
     def nsprefix
@@ -98,7 +103,7 @@ module TFWrapper
           cmd = [
             'terraform',
             'init',
-            "-input=false"
+            '-input=false'
           ].join(' ')
           @backend_config.each do |k, v|
             cmd = cmd + ' ' + "-backend-config='#{k}=#{v}'"
@@ -276,22 +281,27 @@ module TFWrapper
     def check_tf_version
       # run: terraform -version
       all_out_err, exit_status = terraform_runner('terraform -version')
-      raise StandardError, "ERROR: 'terraform -version' exited #{exit_status}" \
-        ": #{all_out_err}" unless exit_status == 0
+      unless exit_status.zero?
+        raise StandardError, "ERROR: 'terraform -version' exited " \
+          "#{exit_status}: #{all_out_err}"
+      end
       all_out_err = all_out_err.strip
       # Find the terraform version string
       m = /Terraform v(\d+\.\d+\.\d+).*/.match(all_out_err)
-      raise StandardError, 'ERROR: could not determine terraform version ' \
-        "from 'terraform -version' output: #{all_out_err}" unless m
+      unless m
+        raise StandardError, 'ERROR: could not determine terraform version ' \
+          "from 'terraform -version' output: #{all_out_err}"
+      end
       # the version will be a string like:
       # Terraform v0.9.2
       # or:
       # Terraform v0.9.3-dev (<GIT SHA><+CHANGES>)
       tf_ver = Gem::Version.new(m[1])
-      raise StandardError, "ERROR: tfwrapper #{TFWrapper::VERSION} is only " \
-        "compatible with Terraform >= #{min_tf_version} but your terraform " \
-        "binary reports itself as #{m[1]} (#{all_out_err})" \
-        '' unless tf_ver >= min_tf_version
+      unless tf_ver >= min_tf_version
+        raise StandardError, "ERROR: tfwrapper #{TFWrapper::VERSION} is only " \
+          "compatible with Terraform >= #{min_tf_version} but your terraform " \
+          "binary reports itself as #{m[1]} (#{all_out_err})"
+      end
       puts "Running with: #{all_out_err}"
     end
 

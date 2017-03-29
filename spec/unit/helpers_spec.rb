@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'spec_helper'
 require 'tfwrapper/helpers'
 
@@ -51,7 +52,7 @@ describe TFWrapper::Helpers do
         )
 
         expect(Open3).to receive(:popen2e)
-          .once.with('foo bar', :chdir => '/foo')
+          .once.with('foo bar', chdir: '/foo')
         expect(STDOUT).to receive(:puts).once.with('mystdout')
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
@@ -73,7 +74,7 @@ describe TFWrapper::Helpers do
         )
 
         expect(Open3).to receive(:popen2e)
-          .once.with('foo bar', :chdir => '/foo')
+          .once.with('foo bar', chdir: '/foo')
         expect(STDERR).to receive(:puts).once.with('IOError: closed stream')
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
@@ -96,7 +97,7 @@ describe TFWrapper::Helpers do
         )
 
         expect(Open3).to receive(:popen2e)
-          .once.with('foo bar', :chdir => '/foo')
+          .once.with('foo bar', chdir: '/foo')
         expect(STDOUT).to receive(:puts).once.with("mystdout\n")
         expect(STDOUT).to receive(:puts).once.with("STDERR\n")
         expect($stdout).to receive(:sync=).once.with(true)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'open3'
 require 'English'
 
@@ -36,7 +37,7 @@ module TFWrapper
       $stdout.sync = true
       all_out_err = ''.dup
       exit_status = nil
-      Open3.popen2e(cmd, :chdir => pwd) do |stdin, stdout_and_err, wait_thread|
+      Open3.popen2e(cmd, chdir: pwd) do |stdin, stdout_and_err, wait_thread|
         stdin.close_write
         begin
           while (line = stdout_and_err.gets)

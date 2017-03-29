@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'spec_helper'
 require 'tfwrapper/raketasks'
 require 'tfwrapper/helpers'
@@ -74,13 +75,13 @@ describe TFWrapper::RakeTasks do
     end
     context 'when consul_url is nil but consul_env_vars_prefix is not' do
       it 'raises an error' do
-        expect {
+        expect do
           TFWrapper::RakeTasks.new(
             'tfdir',
             consul_env_vars_prefix: 'cvprefix',
             tf_vars_from_env: { 'foo' => 'bar' }
           )
-        }.to raise_error(
+        end.to raise_error(
           StandardError,
           'Cannot set env vars in Consul when consul_url option is nil.'
         )
@@ -716,9 +717,9 @@ describe TFWrapper::RakeTasks do
         )
     end
     it 'fails if the version is too old' do
-      allow(subject).to receive(:terraform_runner).and_return([
-        'Terraform v0.0.1-dev (foo)', 0
-      ])
+      allow(subject).to receive(:terraform_runner).and_return(
+        ['Terraform v0.0.1-dev (foo)', 0]
+      )
       allow(STDOUT).to receive(:puts)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform -version')
@@ -728,13 +729,13 @@ describe TFWrapper::RakeTasks do
           StandardError,
           "ERROR: tfwrapper #{TFWrapper::VERSION} is only compatible with "\
           "Terraform >= #{subject.min_tf_version} but your terraform "\
-          "binary reports itself as 0.0.1 (Terraform v0.0.1-dev (foo))"
+          'binary reports itself as 0.0.1 (Terraform v0.0.1-dev (foo))'
         )
     end
     it 'prints the version if compatible' do
-      allow(subject).to receive(:terraform_runner).and_return([
-        'Terraform v999.9.9', 0
-      ])
+      allow(subject).to receive(:terraform_runner).and_return(
+        ['Terraform v999.9.9', 0]
+      )
       allow(STDOUT).to receive(:puts)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform -version')
@@ -749,16 +750,6 @@ describe TFWrapper::RakeTasks do
     end
   end
   describe '#update_consul_stack_env_vars' do
-    context 'when @consul_url is nil' do
-      it 'raises an error' do
-
-      end
-    end
-    context 'when @consul_env_vars_prefix is nil' do
-      it 'raises an error' do
-
-      end
-    end
     context 'when @consul_url and @consul_env_vars_prefix are specified' do
       it 'saves the variables in Consul' do
         vars = { 'foo' => 'bar', 'baz' => 'blam' }
@@ -779,7 +770,8 @@ describe TFWrapper::RakeTasks do
         expect(dbl_config).to receive(:url=).once.with('foo://bar')
         expect(STDOUT).to receive(:puts).once
           .with('Writing stack information to foo://bar at: my/prefix')
-        expect(STDOUT).to receive(:puts).once.with(JSON.pretty_generate(expected))
+        expect(STDOUT).to receive(:puts).once
+          .with(JSON.pretty_generate(expected))
         expect(Diplomat::Kv).to receive(:put)
           .once.with('my/prefix', JSON.generate(expected))
         subject.update_consul_stack_env_vars
