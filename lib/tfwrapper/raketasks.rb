@@ -2,6 +2,8 @@
 require 'tfwrapper/helpers'
 require 'json'
 require 'rake'
+require 'rubygems'
+require 'tfwrapper/version'
 
 module TFWrapper
   # Generates Rake tasks for working with Terraform at Manheim.
@@ -22,6 +24,10 @@ module TFWrapper
       def install_tasks(tf_dir, opts = {})
         new(tf_dir, opts).install
       end
+    end
+
+    def min_tf_version
+      Gem::Version.new('0.9.0')
     end
 
     # Generate Rake tasks for working with Terraform at Manheim.
@@ -83,12 +89,7 @@ module TFWrapper
         desc 'Run terraform init with appropriate arguments'
         task :init do
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
-          # output the terraform version for logging purposes
-          terraform_runner('terraform -version')
-          # the version will be a string like:
-          # Terraform v0.9.2
-          # or:
-          # Terraform v0.9.3-dev (<GIT SHA><+CHANGES>)
+          check_tf_version
           cmd = [
             'terraform',
             'init',
@@ -265,6 +266,29 @@ module TFWrapper
       STDERR.puts "terraform_runner command '#{cmd}' finished and exited 0"
     end
     # rubocop:enable Metrics/PerceivedComplexity
+
+    # Check that the terraform version is compatible
+    def check_tf_version
+      # run: terraform -version
+      all_out_err, exit_status = terraform_runner('terraform -version')
+      raise StandardError, "ERROR: 'terraform -version' exited #{exit_status}" \
+        ": #{all_out_err}" unless exit_status == 0
+      all_out_err = all_out_err.strip
+      # Find the terraform version string
+      m = /Terraform v(\d+\.\d+\.\d+).*/.match(all_out_err)
+      raise StandardError, 'ERROR: could not determine terraform version ' \
+        "from 'terraform -version' output: #{all_out_err}" unless m
+      # the version will be a string like:
+      # Terraform v0.9.2
+      # or:
+      # Terraform v0.9.3-dev (<GIT SHA><+CHANGES>)
+      tf_ver = Gem::Version.new(m[1])
+      raise StandardError, "ERROR: tfwrapper #{TFWrapper::VERSION} is only " \
+        "compatible with Terraform >= #{min_tf_version} but your terraform " \
+        "binary reports itself as #{m[1]} (#{all_out_err})" \
+        '' unless tf_ver >= min_tf_version
+      puts "Running with: #{all_out_err}"
+    end
 
     # update stack status in Consul
     def update_consul_stack_env_vars

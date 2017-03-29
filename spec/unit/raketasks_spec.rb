@@ -2,9 +2,11 @@
 require 'spec_helper'
 require 'tfwrapper/raketasks'
 require 'tfwrapper/helpers'
+require 'tfwrapper/version'
 require 'json'
 require 'retries'
 require 'diplomat'
+require 'rubygems'
 
 describe TFWrapper::RakeTasks do
   subject do
@@ -215,10 +217,10 @@ describe TFWrapper::RakeTasks do
         'foo'     => 'bar'
       )
       allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:check_tf_version)
       expect(TFWrapper::Helpers)
-        .to receive(:check_env_vars).once.with(vars.values)
-      expect(subject).to receive(:terraform_runner).once.ordered
-        .with('terraform -version')
+        .to receive(:check_env_vars).once.ordered.with(vars.values)
+      expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false '\
         '-backend-config=\'address=chost\'' \
@@ -234,10 +236,10 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[])
       subject.instance_variable_set('@backend_config', {})
       allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:check_tf_version)
       expect(TFWrapper::Helpers)
-        .to receive(:check_env_vars).once.with(vars.values)
-      expect(subject).to receive(:terraform_runner).once.ordered
-        .with('terraform -version')
+        .to receive(:check_env_vars).once.ordered.with(vars.values)
+      expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false')
       Rake.application['tf:init'].invoke
@@ -660,6 +662,73 @@ describe TFWrapper::RakeTasks do
         .with('terraform_runner command: \'foo\'')
       expect { subject.terraform_runner('foo') }
         .to raise_error('Errors have occurred executing: \'foo\' (exited 1)')
+    end
+  end
+  describe '#check_tf_version' do
+    it 'fails if the command exits non-zero' do
+      allow(subject).to receive(:terraform_runner).and_return(['myout', 2])
+      allow(STDOUT).to receive(:puts)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform -version')
+      expect(STDOUT).to_not receive(:puts)
+      expect { subject.check_tf_version }
+        .to raise_error(
+          StandardError,
+          'ERROR: \'terraform -version\' exited 2: myout'
+        )
+    end
+    it 'strips build information from the version' do
+      ver = Gem::Version.new('3.4.5')
+      allow(subject).to receive(:terraform_runner)
+        .and_return(['Terraform v3.4.5-dev (abcde1234+CHANGES)', 0])
+      allow(Gem::Version).to receive(:new).and_return(ver)
+      expect(Gem::Version).to receive(:new).once.with('3.4.5')
+      subject.check_tf_version
+    end
+    it 'fails if the version cannot be identified' do
+      allow(subject).to receive(:terraform_runner).and_return(['myout', 0])
+      allow(STDOUT).to receive(:puts)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform -version')
+      expect(STDOUT).to_not receive(:puts)
+      expect { subject.check_tf_version }
+        .to raise_error(
+          StandardError,
+          'ERROR: could not determine terraform version from \'terraform ' \
+          '-version\' output: myout'
+        )
+    end
+    it 'fails if the version is too old' do
+      allow(subject).to receive(:terraform_runner).and_return([
+        'Terraform v0.0.1-dev (foo)', 0
+      ])
+      allow(STDOUT).to receive(:puts)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform -version')
+      expect(STDOUT).to_not receive(:puts)
+      expect { subject.check_tf_version }
+        .to raise_error(
+          StandardError,
+          "ERROR: tfwrapper #{TFWrapper::VERSION} is only compatible with "\
+          "Terraform >= #{subject.min_tf_version} but your terraform "\
+          "binary reports itself as 0.0.1 (Terraform v0.0.1-dev (foo))"
+        )
+    end
+    it 'prints the version if compatible' do
+      allow(subject).to receive(:terraform_runner).and_return([
+        'Terraform v999.9.9', 0
+      ])
+      allow(STDOUT).to receive(:puts)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform -version')
+      expect(STDOUT).to receive(:puts).once
+        .with('Running with: Terraform v999.9.9')
+      subject.check_tf_version
+    end
+  end
+  describe '#min_tf_version' do
+    it 'returns a Gem::Version for the minimum version' do
+      expect(subject.min_tf_version).to eq(Gem::Version.new('0.9.0'))
     end
   end
   describe '#update_consul_stack_env_vars' do
