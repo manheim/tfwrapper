@@ -4,7 +4,7 @@ Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/tfwrapper.s
 
 Documentation: [http://www.rubydoc.info/gems/tfwrapper/](http://www.rubydoc.info/gems/tfwrapper/)
 
-tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) safely, ensuring ptoper configuration of remote state storage, removal of local state before running, and passing in variables from the environment or Ruby.
+tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) 0.9+, ensuring proper initialization and passing in variables from the environment or Ruby, as well as optionally pushing some information to Consul.
 
 ## Overview
 

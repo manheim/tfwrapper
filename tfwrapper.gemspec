@@ -7,10 +7,10 @@ Gem::Specification.new do |gem|
   gem.email       = ['jason@jasonantman.com']
   gem.summary     = 'Rake tasks for running Hashicorp Terraform sanely'
   gem.description = [
-    'tfwrapper provides Rake tasks for working with Hashicorp Terraform,',
-    'ensuring ptoper configuration of remote state storage, removal of local',
-    'state before running, and passing in variables from the environment or',
-    'Ruby.'
+    'tfwrapper provides Rake tasks for working with Hashicorp Terraform 0.9+,',
+    'ensuring proper initialization and passing in variables from the ',
+    'environment or Ruby, as well as optionally pushing some information to ',
+    'Consul.'
   ].join(' ')
   gem.homepage    = 'http://github.com/Manheim/tfwrapper'
   gem.license     = 'MIT'
