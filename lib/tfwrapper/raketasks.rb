@@ -238,7 +238,7 @@ module TFWrapper
     # rubocop:disable Metrics/PerceivedComplexity
     def terraform_runner(cmd)
       require 'retries'
-      STDERR.puts "terraform_runner command: '#{cmd}'"
+      STDERR.puts "terraform_runner command: '#{cmd}' (in #{@tf_dir})"
       out_err = nil
       status = nil
       # exponential backoff as long as we're getting 403s

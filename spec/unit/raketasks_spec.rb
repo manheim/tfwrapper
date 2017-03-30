@@ -568,7 +568,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .once.with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with("terraform_runner command: 'foo'")
+        .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command 'foo' finished and exited 0")
       subject.terraform_runner('foo')
@@ -584,7 +584,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .exactly(2).times.with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with("terraform_runner command: 'foo'")
+        .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
         .with(/terraform_runner\sfailed\swith\sStandardError;\sretry\s
           attempt\s1;\s.+\sseconds\shave\spassed\./x)
@@ -606,7 +606,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .exactly(3).times.with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with("terraform_runner command: 'foo'")
+        .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
         .with(/terraform_runner\sfailed\swith\sTerraForm\shit\sAWS\sAPI\srate\s
           limiting;\sretry\sattempt\s1;\s.+\sseconds\shave\spassed\./x)
@@ -631,7 +631,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .exactly(3).times.with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with("terraform_runner command: 'foo'")
+        .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
         .with(/terraform_runner\sfailed\swith\sTerraForm\scommand\sgot\s403\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
@@ -658,7 +658,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .exactly(3).times.with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with("terraform_runner command: 'foo'")
+        .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
         .with(/terraform_runner\sfailed\swith\sTerraForm\scommand\sgot\s401\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
@@ -677,7 +677,7 @@ describe TFWrapper::RakeTasks do
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
         .with('foo', 'tfdir')
       expect(STDERR).to receive(:puts).once
-        .with('terraform_runner command: \'foo\'')
+        .with('terraform_runner command: \'foo\' (in tfdir)')
       expect { subject.terraform_runner('foo') }
         .to raise_error('Errors have occurred executing: \'foo\' (exited 1)')
     end
