@@ -11,7 +11,12 @@ require 'rubygems'
 
 describe TFWrapper::RakeTasks do
   subject do
-    TFWrapper::RakeTasks.new('tfdir')
+    allow(Rake.application).to receive(:original_dir)
+      .and_return('/rake/dir')
+    allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+    subj = TFWrapper::RakeTasks.new('tfdir')
+    subj.instance_variable_set('@tf_dir', 'tfdir')
+    subj
   end
   describe '#install_tasks' do
     it 'calls constructor without opts if none are passed' do
@@ -45,8 +50,11 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
       allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
       allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
+      allow(Rake.application).to receive(:original_dir)
+        .and_return('/rake/dir')
+      allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
       cls = TFWrapper::RakeTasks.new('tfdir')
-      expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
+      expect(cls.instance_variable_get('@tf_dir')).to eq('/rake/dir/tfdir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
@@ -56,14 +64,19 @@ describe TFWrapper::RakeTasks do
     it 'sets options' do
       allow(ENV).to receive(:[])
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
+      allow(Rake.application).to receive(:original_dir)
+        .and_return('/rake/dir')
+      allow(Rake.application).to receive(:rakefile)
+        .and_return('path/to/Rakefile')
       cls = TFWrapper::RakeTasks.new(
-        'tfdir',
+        'tf/dir',
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
         tf_extra_vars: { 'baz' => 'blam' },
         consul_url: 'foobar'
       )
-      expect(cls.instance_variable_get('@tf_dir')).to eq('tfdir')
+      expect(cls.instance_variable_get('@tf_dir'))
+        .to eq('/rake/dir/path/to/tf/dir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix'))
         .to eq('cvprefix')
       expect(cls.instance_variable_get('@tf_vars_from_env'))
@@ -75,6 +88,9 @@ describe TFWrapper::RakeTasks do
     end
     context 'when consul_url is nil but consul_env_vars_prefix is not' do
       it 'raises an error' do
+        allow(Rake.application).to receive(:original_dir)
+          .and_return('/rake/dir')
+        allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
         expect do
           TFWrapper::RakeTasks.new(
             'tfdir',

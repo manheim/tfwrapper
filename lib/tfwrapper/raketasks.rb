@@ -57,7 +57,16 @@ module TFWrapper
     #   and their values to JSON at this path in Consul. This should have
     #   the same naming constraints as ``consul_prefix``.
     def initialize(tf_dir, opts = {})
-      @tf_dir = tf_dir
+      # find the directory that contains the Rakefile
+      rakedir = File.absolute_path(
+        File.dirname(
+          File.join(
+            Rake.application.original_dir,
+            Rake.application.rakefile
+          )
+        )
+      )
+      @tf_dir = File.join(rakedir, tf_dir)
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
