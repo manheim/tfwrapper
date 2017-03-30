@@ -684,10 +684,11 @@ describe TFWrapper::RakeTasks do
   end
   describe '#check_tf_version' do
     it 'fails if the command exits non-zero' do
-      allow(subject).to receive(:terraform_runner).and_return(['myout', 2])
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
+        .and_return(['myout', 2])
       allow(STDOUT).to receive(:puts)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform -version')
+      expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
+        .with('terraform version', 'tfdir')
       expect(STDOUT).to_not receive(:puts)
       expect { subject.check_tf_version }
         .to raise_error(
@@ -697,17 +698,18 @@ describe TFWrapper::RakeTasks do
     end
     it 'strips build information from the version' do
       ver = Gem::Version.new('3.4.5')
-      allow(subject).to receive(:terraform_runner)
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .and_return(['Terraform v3.4.5-dev (abcde1234+CHANGES)', 0])
       allow(Gem::Version).to receive(:new).and_return(ver)
       expect(Gem::Version).to receive(:new).once.with('3.4.5')
       subject.check_tf_version
     end
     it 'fails if the version cannot be identified' do
-      allow(subject).to receive(:terraform_runner).and_return(['myout', 0])
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
+        .and_return(['myout', 0])
       allow(STDOUT).to receive(:puts)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform -version')
+      expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
+        .with('terraform version', 'tfdir')
       expect(STDOUT).to_not receive(:puts)
       expect { subject.check_tf_version }
         .to raise_error(
@@ -717,12 +719,11 @@ describe TFWrapper::RakeTasks do
         )
     end
     it 'fails if the version is too old' do
-      allow(subject).to receive(:terraform_runner).and_return(
-        ['Terraform v0.0.1-dev (foo)', 0]
-      )
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
+        .and_return(['Terraform v0.0.1-dev (foo)', 0])
       allow(STDOUT).to receive(:puts)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform -version')
+      expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
+        .with('terraform version', 'tfdir')
       expect(STDOUT).to_not receive(:puts)
       expect { subject.check_tf_version }
         .to raise_error(
@@ -733,12 +734,11 @@ describe TFWrapper::RakeTasks do
         )
     end
     it 'prints the version if compatible' do
-      allow(subject).to receive(:terraform_runner).and_return(
-        ['Terraform v999.9.9', 0]
-      )
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
+        .and_return(['Terraform v999.9.9', 0])
       allow(STDOUT).to receive(:puts)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform -version')
+      expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
+        .with('terraform version', 'tfdir')
       expect(STDOUT).to receive(:puts).once
         .with('Running with: Terraform v999.9.9')
       subject.check_tf_version

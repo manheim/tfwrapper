@@ -280,7 +280,9 @@ module TFWrapper
     # Check that the terraform version is compatible
     def check_tf_version
       # run: terraform -version
-      all_out_err, exit_status = terraform_runner('terraform -version')
+      all_out_err, exit_status = TFWrapper::Helpers.run_cmd_stream_output(
+        'terraform version', @tf_dir
+      )
       unless exit_status.zero?
         raise StandardError, "ERROR: 'terraform -version' exited " \
           "#{exit_status}: #{all_out_err}"
