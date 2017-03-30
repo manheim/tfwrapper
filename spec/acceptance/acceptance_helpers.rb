@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'ffi'
+
 class HashicorpFetcher
 
   def initialize(program, version)
@@ -14,11 +16,19 @@ class HashicorpFetcher
   end
 
   def bin_os
-    'linux'
+    FFI::Platform.OS
   end
 
   def bin_arch
-    'amd64'
+    arch = FFI::Platform.ARCH
+    case arch
+    when /x86_64|amd64/
+      'amd64'
+    when /i?86|x86/
+      '386'
+    else
+      arch
+    end
   end
 
   def bin_path
