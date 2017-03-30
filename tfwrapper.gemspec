@@ -32,6 +32,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'cri', '~> 2'
   gem.add_development_dependency 'diplomat', '~> 0.15'
   gem.add_development_dependency 'faraday', '~> 0.9'
+  gem.add_development_dependency 'ffi', '>= 1.9.9'
   gem.add_development_dependency 'git', '~> 1.2', '>= 1.2.9.1'
   gem.add_development_dependency 'guard', '~> 2.13'
   gem.add_development_dependency 'guard-bundler', '~> 2.1'

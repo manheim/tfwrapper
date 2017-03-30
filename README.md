@@ -176,15 +176,26 @@ TFWrapper::RakeTasks.install_tasks(
 ## Development
 
 1. ``bundle install --path vendor``
-2. ``bundle exec rake pre_commit`` to ensure spec tests are passing and style is valid before making your changes
-3. make your changes, and write spec tests for them. You can run ``bundle exec guard`` to continually run spec tests and rubocop when files change.
-4. ``bundle exec rake pre_commit`` to confirm your tests pass and your style is valid. You should confirm 100% coverage. If you wish, you can run ``bundle exec guard`` to dynamically run rspec, rubocop and YARD when relevant files change.
-5. Update ``ChangeLog.md`` for your changes.
-6. Run ``bundle exec rake yard:serve`` to generate documentation for your Gem and serve it live at [http://localhost:8808](http://localhost:8808), and ensure it looks correct.
-7. Open a pull request for your changes.
-8. When shipped, wait for CircleCI to test. Once shipped and tests pass, merge the PR.
+2. ``bundle exec rake pre_commit`` to ensure unit tests are passing and style is valid before making your changes.
+3. ``bundle exec rake spec:acceptance`` to ensure acceptance tests are passing before making your changes.
+4. make your changes, and write unit tests for them. If you introduced user-visible (public API) changes, write acceptance tests for them. You can run ``bundle exec guard`` to continually run unit tests and rubocop when files change.
+5. ``bundle exec rake pre_commit`` to confirm your unit tests pass and your style is valid. You should confirm 100% coverage. If you wish, you can run ``bundle exec guard`` to dynamically run rspec, rubocop and YARD when relevant files change.
+6. ``bundle exec rake spec:acceptance`` to ensure acceptance tests are passing.
+7. Update ``ChangeLog.md`` for your changes.
+8. Run ``bundle exec rake yard:serve`` to generate documentation for your Gem and serve it live at [http://localhost:8808](http://localhost:8808), and ensure it looks correct.
+9. Open a pull request for your changes.
+10. When shipped, wait for CircleCI to test. Once shipped and tests pass, merge the PR.
 
 When running inside CircleCI, rspec will place reports and artifacts under the right locations for CircleCI to archive them. When running outside of CircleCI, coverage reports will be written to ``coverage/`` and test reports (HTML and JUnit XML) will be written to ``results/``.
+
+### Acceptance Tests
+
+This gem includes some rspec-based acceptance tests, runnable via ``bundle exec rake spec:acceptance``. These tests download
+a specific version of Terraform and Consul, run a local Consul server (in ``-dev`` mode), and actually run ``terraform`` via
+``rake`` and confirm that Terraform both runs correctly and correctly updates state in Consul. The terraform configurations
+and rakefiles used can be found in ``spec/acceptance``. The terraform configurations use only the
+[consul](https://www.terraform.io/docs/providers/consul/index.html) provider, to remove any external dependencies other than
+Consul (which is already used to test remote state).
 
 ## Release Checklist
 

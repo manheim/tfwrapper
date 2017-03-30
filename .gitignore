@@ -11,6 +11,8 @@
 /tmp/
 /results/
 /vendor/
+.terraform
+build.tfvars.json
 
 # Used by dotenv library to load environment variables.
 # .env

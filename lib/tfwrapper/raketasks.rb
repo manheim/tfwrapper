@@ -58,15 +58,9 @@ module TFWrapper
     #   the same naming constraints as ``consul_prefix``.
     def initialize(tf_dir, opts = {})
       # find the directory that contains the Rakefile
-      rakedir = File.absolute_path(
-        File.dirname(
-          File.join(
-            Rake.application.original_dir,
-            Rake.application.rakefile
-          )
-        )
-      )
-      @tf_dir = File.join(rakedir, tf_dir)
+      rakedir = File.realpath(Rake.application.rakefile)
+      rakedir = File.dirname(rakedir) if File.file?(rakedir)
+      @tf_dir = File.realpath(File.join(rakedir, tf_dir))
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
@@ -213,7 +207,7 @@ module TFWrapper
     # add the 'tf:write_tf_vars' Rake task
     def install_write_tf_vars
       namespace nsprefix do
-        desc "Write ./#{var_file_path}"
+        desc "Write #{var_file_path}"
         task :write_tf_vars do
           tf_vars = terraform_vars
           puts 'Terraform vars:'

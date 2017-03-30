@@ -3,7 +3,6 @@
 require 'ffi'
 
 class HashicorpFetcher
-
   def initialize(program, version)
     @program = program
     @prog_ucase = @program.upcase
@@ -16,11 +15,11 @@ class HashicorpFetcher
   end
 
   def bin_os
-    FFI::Platform.OS
+    FFI::Platform::OS
   end
 
   def bin_arch
-    arch = FFI::Platform.ARCH
+    arch = FFI::Platform::ARCH
     case arch
     when /x86_64|amd64/
       'amd64'
@@ -46,40 +45,41 @@ class HashicorpFetcher
 
   def vendored_required?
     return false if File.file?(bin_path) && is_correct_version?
-    return true
+    true
   end
 
+  # rubocop:disable Metrics/AbcSize
   def fetch
-    return bin_path unless vendored_required?
+    return File.realpath(bin_path) unless vendored_required?
     require 'open-uri'
 
     puts "Fetching #{package_url}..."
 
-    zippath = "vendor/#{program}.zip"
+    zippath = "vendor/#{@program}.zip"
     begin
-      File.open(zippath, "wb") do |saved_file|
-        open(package_url, "rb") do |read_file|
+      File.open(zippath, 'wb') do |saved_file|
+        open(package_url, 'rb') do |read_file|
           saved_file.write(read_file.read)
         end
       end
     rescue OpenURI::HTTPError
-      puts "#{@prog_cap} version #{@version} not found (HTTPError for " \
-        "#{package_url})."
-      break
+      raise StandardError, "#{@prog_cap} version #{@version} not found " \
+        "(HTTPError for #{package_url})."
     end
 
     puts "Extracting binary #{bin_dir}..."
     system 'mkdir', '-p', bin_dir
     system 'unzip', zippath, '-d', bin_dir
 
-    puts "Cleaning up..."
+    puts 'Cleaning up...'
     system 'rm', zippath
-    fail unless is_correct_version?
-    bin_path
+    raise StandardErrro, 'Error: wrong version' unless is_correct_version?
+    File.realpath(bin_path)
   end
+  # rubocop:enable Metrics/AbcSize
 
   def is_correct_version?
-    ver = `#{bin_path} -version`.strip
+    ver = `#{bin_path} version`.strip
     unless ver =~ /^#{Regexp.quote(@prog_cap)} v#{Regexp.quote(@version)}/
       puts "ERROR: Tests need #{@prog_cap} version #{@version} but got: #{ver}"
       return false

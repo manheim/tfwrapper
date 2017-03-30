@@ -11,9 +11,8 @@ require 'rubygems'
 
 describe TFWrapper::RakeTasks do
   subject do
-    allow(Rake.application).to receive(:original_dir)
-      .and_return('/rake/dir')
     allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+    allow(File).to receive(:realpath) { |p| p }
     subj = TFWrapper::RakeTasks.new('tfdir')
     subj.instance_variable_set('@tf_dir', 'tfdir')
     subj
@@ -50,9 +49,10 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
       allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
       allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
-      allow(Rake.application).to receive(:original_dir)
-        .and_return('/rake/dir')
-      allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+      allow(Rake.application).to receive(:rakefile)
+        .and_return('/rake/dir/Rakefile')
+      allow(File).to receive(:realpath) { |p| p.sub('../', '') }
+      allow(File).to receive(:file?).and_return(true)
       cls = TFWrapper::RakeTasks.new('tfdir')
       expect(cls.instance_variable_get('@tf_dir')).to eq('/rake/dir/tfdir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
@@ -64,10 +64,9 @@ describe TFWrapper::RakeTasks do
     it 'sets options' do
       allow(ENV).to receive(:[])
       allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
-      allow(Rake.application).to receive(:original_dir)
-        .and_return('/rake/dir')
       allow(Rake.application).to receive(:rakefile)
-        .and_return('path/to/Rakefile')
+        .and_return('/path/to')
+      allow(File).to receive(:realpath) { |p| p.sub('../', '') }
       cls = TFWrapper::RakeTasks.new(
         'tf/dir',
         consul_env_vars_prefix: 'cvprefix',
@@ -76,7 +75,7 @@ describe TFWrapper::RakeTasks do
         consul_url: 'foobar'
       )
       expect(cls.instance_variable_get('@tf_dir'))
-        .to eq('/rake/dir/path/to/tf/dir')
+        .to eq('/path/to/tf/dir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix'))
         .to eq('cvprefix')
       expect(cls.instance_variable_get('@tf_vars_from_env'))
@@ -91,6 +90,7 @@ describe TFWrapper::RakeTasks do
         allow(Rake.application).to receive(:original_dir)
           .and_return('/rake/dir')
         allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+        allow(File).to receive(:realpath) { |p| p }
         expect do
           TFWrapper::RakeTasks.new(
             'tfdir',
