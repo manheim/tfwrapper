@@ -20,7 +20,7 @@ describe 'tfwrapper' do
   after(:all) do
     @server.stop
   end
-  context 'basic TF with remote state' do
+  context 'testOne - basic TF with remote state' do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures')
@@ -104,7 +104,7 @@ describe 'tfwrapper' do
       end
     end
   end
-  context 'TF with vars, remote state and consul env var update' do
+  context 'testTwo - TF with vars, remote state and consul env var update' do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures', 'testTwo')
