@@ -18,7 +18,7 @@ end
 
 namespace :spec do
   desc 'run ALL spec tests'
-  task all: [:unit, :acceptance]
+  task all: %i(unit acceptance)
 
   desc 'run unit tests'
   RSpec::Core::RakeTask.new(:unit) do |t|

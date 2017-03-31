@@ -19,3 +19,4 @@ Lint/UnneededDisable:
 Style/MutableConstant:
   Exclude:
     - 'lib/tfwrapper/version.rb'
+    - 'spec/acceptance/acceptance_spec.rb'
