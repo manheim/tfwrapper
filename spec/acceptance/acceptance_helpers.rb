@@ -2,6 +2,15 @@
 
 require 'ffi'
 
+def cleanup_tf
+  fixture_dir = File.absolute_path(
+    File.join(File.dirname(__FILE__), '..', 'fixtures')
+  )
+  Dir.glob("#{fixture_dir}/**/.terraform").each do |d|
+    FileUtils.rmtree(d) if File.directory?(d)
+  end
+end
+
 class HashicorpFetcher
   def initialize(program, version)
     @program = program

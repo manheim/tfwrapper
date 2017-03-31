@@ -20,6 +20,7 @@ describe 'tfwrapper' do
   after(:all) do
     @server.stop
   end
+  after(:each) { cleanup_tf }
   context 'testOne - basic TF with remote state' do
     before(:all) do
       @fixturepath = File.absolute_path(
@@ -29,9 +30,13 @@ describe 'tfwrapper' do
     describe 'rake -T' do
       before(:all) do
         @out_err, @ecode = Open3.capture2e(
-          'bundle exec rake -T',
+          'timeout -k 60 45 bundle exec rake -T',
           chdir: @fixturepath
         )
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
       end
       it 'exits zero' do
         expect(@ecode.exitstatus).to eq(0)
@@ -59,13 +64,17 @@ describe 'tfwrapper' do
     describe 'tf:apply' do
       before(:all) do
         @out_err, @ecode = Open3.capture2e(
-          'bundle exec rake tf:apply',
+          'timeout -k 60 45 bundle exec rake tf:apply',
           chdir: @fixturepath
         )
         @varpath = File.join(@fixturepath, 'build.tfvars.json')
       end
       after(:all) do
         File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
       end
       it 'exits zero' do
         expect(@ecode.exitstatus).to eq(0)
@@ -115,9 +124,13 @@ describe 'tfwrapper' do
     describe 'rake -T' do
       before(:all) do
         @out_err, @ecode = Open3.capture2e(
-          'bundle exec rake -T',
+          'timeout -k 60 45 bundle exec rake -T',
           chdir: @fixturepath
         )
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
       end
       it 'exits zero' do
         expect(@ecode.exitstatus).to eq(0)
@@ -145,13 +158,17 @@ describe 'tfwrapper' do
     describe 'tf:apply' do
       before(:all) do
         @out_err, @ecode = Open3.capture2e(
-          'bundle exec rake tf:apply',
+          'timeout -k 60 45 bundle exec rake tf:apply',
           chdir: @fixturepath
         )
         @varpath = File.join(@fixturepath, 'build.tfvars.json')
       end
       after(:all) do
         File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
       end
       it 'exits zero' do
         expect(@ecode.exitstatus).to eq(0)
@@ -196,5 +213,249 @@ describe 'tfwrapper' do
       end
     end
   end
-  context 'TF with multiple runs to different state paths, via namespaces'
+  context 'testThree - TF with namespaces' do
+    before(:all) do
+      @fixturepath = File.absolute_path(
+        File.join(File.dirname(__FILE__), '..', 'fixtures', 'testThree')
+      )
+      ENV['FOO'] = 'fooval'
+    end
+    after(:all) { ENV.delete('FOO') }
+    describe 'rake -T' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake -T',
+          chdir: @fixturepath
+        )
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'lists the 15 tasks' do
+        lines = @out_err.split("\n")
+        expect(lines.length).to eq(15)
+      end
+      it 'includes the non-namespaced apply task' do
+        expect(@out_err).to include('rake tf:apply[target]')
+      end
+      it 'includes the non-namespaced destroy task' do
+        expect(@out_err).to include('rake tf:destroy[target]')
+      end
+      it 'includes the non-namespaced init task' do
+        expect(@out_err).to include('rake tf:init')
+      end
+      it 'includes the non-namespaced plan task' do
+        expect(@out_err).to include('rake tf:plan[target]')
+      end
+      it 'includes the non-namespaced write_tf_vars task' do
+        expect(@out_err).to include('rake tf:write_tf_vars')
+      end
+      it 'includes the bar-namespaced apply task' do
+        expect(@out_err).to include('rake bar_tf:apply[target]')
+      end
+      it 'includes the bar-namespaced destroy task' do
+        expect(@out_err).to include('rake bar_tf:destroy[target]')
+      end
+      it 'includes the bar-namespaced init task' do
+        expect(@out_err).to include('rake bar_tf:init')
+      end
+      it 'includes the bar-namespaced plan task' do
+        expect(@out_err).to include('rake bar_tf:plan[target]')
+      end
+      it 'includes the bar-namespaced write_tf_vars task' do
+        expect(@out_err).to include('rake bar_tf:write_tf_vars')
+      end
+      it 'includes the baz-namespaced apply task' do
+        expect(@out_err).to include('rake baz_tf:apply[target]')
+      end
+      it 'includes the baz-namespaced destroy task' do
+        expect(@out_err).to include('rake baz_tf:destroy[target]')
+      end
+      it 'includes the baz-namespaced init task' do
+        expect(@out_err).to include('rake baz_tf:init')
+      end
+      it 'includes the baz-namespaced plan task' do
+        expect(@out_err).to include('rake baz_tf:plan[target]')
+      end
+      it 'includes the baz-namespaced write_tf_vars task' do
+        expect(@out_err).to include('rake baz_tf:write_tf_vars')
+      end
+    end
+    describe 'tf:apply' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake tf:apply',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'uses the correct Terraform version' do
+        expect(@out_err).to include("Terraform v#{TF_VERSION}")
+      end
+      it 'runs apply correctly and succeeds' do
+        expect(@out_err)
+          .to include('terraform_runner command: \'terraform apply -var-file')
+        expect(@out_err).to include('consul_keys.testThreeFoo: Creating...')
+        expect(@out_err).to include(
+          'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
+        )
+        expect(@out_err).to include(
+          "Outputs:\n\nbar_variable = barval\nfoo_variable = fooval"
+        )
+      end
+      it 'writes the vars file' do
+        expect(File.file?(@varpath)).to be(true)
+        c = File.open(@varpath, 'r').read
+        expect(JSON.parse(c))
+          .to eq({'foo' => 'fooval', 'bar' => 'barval'})
+      end
+      it 'sets the consul keys' do
+        expect(Diplomat::Kv.get('testThreeFoo/foo')).to eq('fooval')
+        expect(Diplomat::Kv.get('testThreeFoo/bar')).to eq('barval')
+      end
+      it 'writes remote state to consul' do
+        state = JSON.parse(Diplomat::Kv.get('terraform/testThreeFoo'))
+        expect(state['version']).to eq(3)
+        expect(state['terraform_version']).to eq(TF_VERSION)
+        expect(state['serial']).to eq(1)
+        expect(state['modules'].length).to eq(1)
+        expect(state['modules'][0]['outputs']['foo_variable']['value'])
+          .to eq('fooval')
+        expect(state['modules'][0]['outputs']['bar_variable']['value'])
+          .to eq('barval')
+        expect(state['modules'][0]['resources'])
+          .to include('consul_keys.testThreeFoo')
+        expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+    end
+    describe 'bar_tf:apply' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake bar_tf:apply',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'bar_build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'uses the correct Terraform version' do
+        expect(@out_err).to include("Terraform v#{TF_VERSION}")
+      end
+      it 'runs apply correctly and succeeds' do
+        expect(@out_err)
+          .to include('terraform_runner command: \'terraform apply -var-file')
+        expect(@out_err).to include('consul_keys.testThreeBar: Creating...')
+        expect(@out_err).to include(
+          'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
+        )
+        expect(@out_err).to include(
+          "Outputs:\n\nbar_variable = barval\nfoo_variable = fooval"
+        )
+      end
+      it 'writes the vars file' do
+        expect(File.file?(@varpath)).to be(true)
+        c = File.open(@varpath, 'r').read
+        expect(JSON.parse(c))
+          .to eq({'foo' => 'fooval', 'bar' => 'barval'})
+      end
+      it 'sets the consul keys' do
+        expect(Diplomat::Kv.get('testThreeBar/foo')).to eq('fooval')
+        expect(Diplomat::Kv.get('testThreeBar/bar')).to eq('barval')
+      end
+      it 'writes remote state to consul' do
+        state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBar'))
+        expect(state['version']).to eq(3)
+        expect(state['terraform_version']).to eq(TF_VERSION)
+        expect(state['serial']).to eq(1)
+        expect(state['modules'].length).to eq(1)
+        expect(state['modules'][0]['outputs']['foo_variable']['value'])
+          .to eq('fooval')
+        expect(state['modules'][0]['outputs']['bar_variable']['value'])
+          .to eq('barval')
+        expect(state['modules'][0]['resources'])
+          .to include('consul_keys.testThreeBar')
+        expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+    end
+    describe 'baz_tf:apply' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake baz_tf:apply',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'baz_build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'uses the correct Terraform version' do
+        expect(@out_err).to include("Terraform v#{TF_VERSION}")
+      end
+      it 'runs apply correctly and succeeds' do
+        expect(@out_err)
+          .to include('terraform_runner command: \'terraform apply -var-file')
+        expect(@out_err).to include('consul_keys.testThreeBaz: Creating...')
+        expect(@out_err).to include(
+          'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
+        )
+        expect(@out_err).to include(
+          "Outputs:\n\nfoo_variable = fooval"
+        )
+      end
+      it 'writes the vars file' do
+        expect(File.file?(@varpath)).to be(true)
+        c = File.open(@varpath, 'r').read
+        expect(JSON.parse(c))
+          .to eq({'foo' => 'fooval'})
+      end
+      it 'sets the consul keys' do
+        expect(Diplomat::Kv.get('testThreeBaz/foo')).to eq('fooval')
+      end
+      it 'writes remote state to consul' do
+        state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBaz'))
+        expect(state['version']).to eq(3)
+        expect(state['terraform_version']).to eq(TF_VERSION)
+        expect(state['serial']).to eq(1)
+        expect(state['modules'].length).to eq(1)
+        expect(state['modules'][0]['outputs']['foo_variable']['value'])
+          .to eq('fooval')
+        expect(state['modules'][0]['resources'])
+          .to include('consul_keys.testThreeBaz')
+        expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+      it 'writes the environment variables to Consul' do
+        cvars = JSON.parse(Diplomat::Kv.get('vars/testThreeBaz'))
+        expect(cvars).to eq({'FOO' => 'fooval'})
+      end
+    end
+  end
 end

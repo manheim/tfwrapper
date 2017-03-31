@@ -197,6 +197,8 @@ and rakefiles used can be found in ``spec/acceptance``. The terraform configurat
 [consul](https://www.terraform.io/docs/providers/consul/index.html) provider, to remove any external dependencies other than
 Consul (which is already used to test remote state).
 
+Note that the acceptance tests depend on the GNU coreutils ``timeout`` command.
+
 ## Release Checklist
 
 1. Ensure Circle tests are passing.
