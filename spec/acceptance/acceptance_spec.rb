@@ -3,8 +3,13 @@
 require_relative 'consulserver'
 require_relative 'acceptance_helpers'
 require 'open3'
+require 'json'
 
 TF_VERSION = '0.9.2'
+
+Diplomat.configure do |config|
+  config.url = 'http://127.0.0.1:8500'
+end
 
 describe 'tfwrapper' do
   before(:all) do
@@ -81,6 +86,20 @@ describe 'tfwrapper' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(c).to eq('{}')
+      end
+      it 'sets the consul key' do
+        expect(Diplomat::Kv.get('testOne')).to eq('bar')
+      end
+      it 'writes remote state to consul' do
+        state = JSON.parse(Diplomat::Kv.get('terraform/testOne'))
+        expect(state['version']).to eq(3)
+        expect(state['terraform_version']).to eq(TF_VERSION)
+        expect(state['serial']).to eq(1)
+        expect(state['modules'].length).to eq(1)
+        expect(state['modules'][0]['outputs']['foo_variable']['value'])
+          .to eq('bar')
+        expect(state['modules'][0]['resources'])
+          .to include('consul_keys.testOne')
       end
     end
   end
