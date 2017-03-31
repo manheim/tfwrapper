@@ -11,22 +11,22 @@ require 'tfwrapper/raketasks'
 
 TFWrapper::RakeTasks.install_tasks(
   'foo',
-  backend_config: {'path' => 'terraform/testThreeFoo'},
-  tf_vars_from_env: {'foo' => 'FOO'},
-  tf_extra_vars: {'bar' => 'barval'}
+  backend_config: { 'path' => 'terraform/testThreeFoo' },
+  tf_vars_from_env: { 'foo' => 'FOO' },
+  tf_extra_vars: { 'bar' => 'barval' }
 )
 
 TFWrapper::RakeTasks.install_tasks(
   'bar',
   namespace_prefix: 'bar',
-  tf_vars_from_env: {'foo' => 'FOO'},
-  tf_extra_vars: {'bar' => 'barval'}
+  tf_vars_from_env: { 'foo' => 'FOO' },
+  tf_extra_vars: { 'bar' => 'barval' }
 )
 
 TFWrapper::RakeTasks.install_tasks(
   'baz',
   namespace_prefix: 'baz',
-  tf_vars_from_env: {'foo' => 'FOO'},
+  tf_vars_from_env: { 'foo' => 'FOO' },
   consul_url: 'http://127.0.0.1:8500',
   consul_env_vars_prefix: 'vars/testThreeBaz'
 )

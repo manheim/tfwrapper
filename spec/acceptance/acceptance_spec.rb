@@ -191,7 +191,7 @@ describe 'tfwrapper' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq({'foo' => 'fooval', 'bar' => 'barval'})
+          .to eq('foo' => 'fooval', 'bar' => 'barval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testTwo/foo')).to eq('fooval')
@@ -321,7 +321,7 @@ describe 'tfwrapper' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq({'foo' => 'fooval', 'bar' => 'barval'})
+          .to eq('foo' => 'fooval', 'bar' => 'barval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testThreeFoo/foo')).to eq('fooval')
@@ -378,7 +378,7 @@ describe 'tfwrapper' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq({'foo' => 'fooval', 'bar' => 'barval'})
+          .to eq('foo' => 'fooval', 'bar' => 'barval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testThreeBar/foo')).to eq('fooval')
@@ -435,7 +435,7 @@ describe 'tfwrapper' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq({'foo' => 'fooval'})
+          .to eq('foo' => 'fooval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testThreeBaz/foo')).to eq('fooval')
@@ -454,7 +454,7 @@ describe 'tfwrapper' do
       end
       it 'writes the environment variables to Consul' do
         cvars = JSON.parse(Diplomat::Kv.get('vars/testThreeBaz'))
-        expect(cvars).to eq({'FOO' => 'fooval'})
+        expect(cvars).to eq('FOO' => 'fooval')
       end
     end
   end
