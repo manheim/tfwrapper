@@ -65,6 +65,7 @@ class HashicorpFetcher
     puts "Fetching #{package_url}..."
 
     zippath = "vendor/#{@program}.zip"
+    Dir.mkdir('vendor') unless File.directory?('vendor')
     begin
       File.open(zippath, 'wb') do |saved_file|
         open(package_url, 'rb') do |read_file|
