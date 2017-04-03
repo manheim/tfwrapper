@@ -43,6 +43,10 @@ Add to your ``Gemfile``:
 gem 'tfwrapper', '~> 0.1.0'
 ```
 
+### Supported Terraform Versions
+
+tfwrapper only supports terraform 0.9+. It has been tested up to 0.9.2.
+
 ## Usage
 
 To use the TerraForm rake tasks, require the module in your Rakefile and use the
