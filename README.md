@@ -23,7 +23,7 @@ This Gem provides the following Rake tasks:
   one or more optional [resource address](https://www.terraform.io/docs/internals/resource-addressing.html) targets to pass to
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:apply[aws_instance.foo[1]]`` or
   ``bundle exec rake tf:apply[aws_instance.foo[1],aws_instance.bar[2]]``; see the
-  [apply documentation](https://www.terraform.io/docs/commands/apply.html) for more information.
+  [apply documentation](https://www.terraform.io/docs/commands/apply.html) for more information. This also runs a plan first.
 * __tf:refresh__ - run ``terraform refresh``
 * __tf:destroy__ - run ``terraform destroy`` with all variables and configuration, and TF variables written to disk. You can specify
   one or more optional [resource address](https://www.terraform.io/docs/internals/resource-addressing.html) targets to pass to
@@ -39,138 +39,239 @@ with 1.9.3 is simply too high to justify.
 
 Add to your ``Gemfile``:
 
-```
+```ruby
 gem 'tfwrapper', '~> 0.1.0'
 ```
 
 ## Usage
 
 To use the TerraForm rake tasks, require the module in your Rakefile and use the
-``install_tasks`` method to set up the tasks. ``install_tasks`` takes two mandatory parameters;
-``tf_dir`` specifying the relative path (from the Rakefile) to the TerraForm configuration and ``consul_prefix`` specifying the key to store state at in Consul. It also expects
-the ``CONSUL_HOST`` environment variable to be set to the address of the Consul cluster used for storing state, if you are not overriding the state storage options.
+``install_tasks`` method to set up the tasks. ``install_tasks`` takes one mandatory parameter,
+``tf_dir`` specifying the relative path (from the Rakefile) to the TerraForm configuration.
+
+For a directory layout like:
 
 ```
+.
+├── bar.tf
+├── foo.tf
+├── main.tf
+└── Rakefile
+```
+
+The minimal ``Rakefile`` would be:
+
+```ruby
 require 'tfwrapper/raketasks'
 
-ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
-
-TFWrapper::RakeTasks.install_tasks(
-  'tf/',
-  "terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}"
-)
+TFWrapper::RakeTasks.install_tasks('.')
 ```
+
+``rake -T`` output:
+
+```
+rake tf:apply[target]        # Apply a terraform plan that will provision your resources; specify optional CSV targets
+rake tf:destroy[target]      # Destroy any live resources that are tracked by your state files; specify optional CSV targets
+rake tf:init                 # Run terraform init with appropriate arguments
+rake tf:plan[target]         # Output the set plan to be executed by apply; specify optional CSV targets
+rake tf:write_tf_vars        # Write PWD/build.tfvars.json
+```
+
+You can also point ``tf_dir`` to an arbitrary directory relative to the Rakefile, such as when your terraform
+configurations are nested below the Rakefile:
+
+```
+.
+├── infrastructure
+│   └── terraform
+│       ├── bar.tf
+│       ├── foo.tf
+│       └── main.tf
+├── lib
+├── Rakefile
+└── spec
+```
+
+Rakefile:
+
+```ruby
+require 'tfwrapper/raketasks'
+
+TFWrapper::RakeTasks.install_tasks('infrastructure/terraform')
+```
+
+### Environment Variables to Terraform Variables
 
 If you wish to bind the values of environment variables to TerraForm variables, you can specify a mapping
 of TerraForm variable name to environment variable name in the ``tf_vars_from_env`` option; these variables
 will be automatically read from the environment and passed into TerraForm with the appropriate names. The following
-example sets the ``consul_address`` terraform variable to the value of the ``CONSUL_HOST`` environment variable,
-and likewise for the ``environment`` terraform variable from the ``ENVIRONMENT`` env var. It also specifies the
-``consul_env_vars_prefix``, which will write the environment variables used in ``tf_vars_from_env`` and their values
-to Consul at the specified path.
+example sets the ``consul_address`` terraform variable to the value of the ``CONSUL_HOST`` environment variable
+(defaulting it to ``consul.example.com:8500`` if it is not already set in the environment),
+and likewise for the ``environment`` terraform variable from the ``ENVIRONMENT`` env var.
 
-```
+```ruby
 require 'tfwrapper/raketasks'
-ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
-tf_env_vars = {
-  'consul_address'           => 'CONSUL_HOST',
-  'environment'              => 'ENVIRONMENT',
-}
+ENV['CONSUL_HOST'] ||= 'consul.example.com:8500'
+
 TFWrapper::RakeTasks.install_tasks(
-  'tf/host/',
-  "terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}",
-  consul_vars_prefix: "terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}_env_vars",
-  tf_vars_from_env: tf_env_vars
+  '.',
+  tf_vars_from_env: {
+    'consul_address'           => 'CONSUL_HOST',
+    'environment'              => 'ENVIRONMENT',
+  }
 )
 ```
+
+### Ruby Variables to Terraform Variables
 
 If you wish to explicitly bind values from your Ruby code to terraform variables, you can do this with
 the ``tf_extra_vars`` option. Variables specified in this way will override same-named variables populated
 via ``tf_vars_from_env``. In the following example, the ``foobar`` terraform variable will have a value
-of ``baz``, regardless of what the ``FOOBAR`` environment variable is set to:
+of ``baz``, regardless of what the ``FOOBAR`` environment variable is set to, and the ``hostname``
+terraform variable will be set to the hostname (``Socket.gethostname``) of the system Rake is running on:
 
-```
-require 'tfwrapper/raketasks'
-ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
-tf_env_vars = {
-  'consul_address'           => 'CONSUL_HOST',
-  'environment'              => 'ENVIRONMENT',
-  'foobar'                   => 'FOOBAR',
-}
-TFWrapper::RakeTasks.install_tasks(
-  tf_dir='tf/host/'
-  consul_prefix="terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}",
-  consul_vars_prefix="terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}_env_vars",
-  tf_vars_from_env=tf_env_vars,
-  tf_extra_vars={'foobar' => 'baz'}
-)
-```
-
-If you need to work with multiple different Terraform configurations, this is possible
-by adding a namespace prefix and using the class multiple times. The following example
-will produce two sets of terraform Rake tasks; one with the default ``tf:`` namespace
-that acts on the configurations under ``tf/``, and one with a ``foo_tf:`` namespace
-that acts on the configurations under ``foo/``:
-
-```
-require 'tfwrapper/raketasks'
-ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
-TFWrapper::RakeTasks.install_tasks(
-  tf_dir='tf/'
-  consul_prefix="terraform/re/MY_PROJECT_NAME/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}",
-)
-
-# foo/ terraform tasks
-TFWrapper::RakeTasks.install_tasks(
-  tf_dir='foo/'
-  consul_prefix="terraform/re/MY_PROJECT_NAME-foo/#{ENV['TEAM_UID']}/#{ENV['ENVIRONMENT']}",
-  namespace_prefix='foo'
-)
-```
-
-#### Non-Default Remote State Storage
-
-To store your remote state under ``foo/bar`` in Consul:
-
-```
+```ruby
+require 'socket'
 require 'tfwrapper/raketasks'
 
-ENV['CONSUL_HOST'] ||= 're.consul.aws-dev.manheim.com:8500'
+ENV['FOOBAR'] ||= 'not_baz'
 
 TFWrapper::RakeTasks.install_tasks(
-  'tf/',
-  'foo/bar'
-)
-```
-
-To store your state at ``terraform/#{ENV['PROJECT']}/#{ENV['ENVIRONMENT']}/terraform.tfstate``
-(the default key if not otherwise specified) in the ``manheim-re`` S3 bucket in us-east-1:
-
-```
-require 'tfwrapper/raketasks'
-
-TFWrapper::RakeTasks.install_tasks(
-  'tf/',
-  '',
-  remote_backend_name: 's3'
-)
-```
-
-To store your state at ``foo/bar/terraform.tfstate`` in the ``baz`` S3 bucket in us-west-1:
-
-```
-require 'tfwrapper/raketasks'
-
-TFWrapper::RakeTasks.install_tasks(
-  'tf/',
-  '',
-  remote_backend_name: 's3',
-  backend_config: {
-    'bucket' => 'baz',
-    'key'    => 'foo/bar/terraform.tfstate',
-    'region' => 'us-west-1'
+  '.',
+  tf_vars_from_env: {
+    'foobar' => 'FOOBAR'
+  },
+  tf_extra_vars: {
+    'foobar'   => 'baz',
+    'hostname' => Socket.gethostname
   }
 )
+```
+
+### Namespace Prefixes for Multiple Configurations
+
+If you need to work with multiple different Terraform configurations, this is possible
+by adding a namespace prefix and calling ``install_tasks`` multiple times. The following example
+will produce two sets of terraform Rake tasks; one with the default ``tf:`` namespace
+that acts on the configurations under ``tf/foo``, and one with a ``bar_tf:`` namespace
+that acts on the configurations under ``tf/bar``. You can use as many namespaces as
+you want.
+
+Directory tree:
+
+```
+.
+├── Rakefile
+└── tf
+    ├── bar
+    │   └── bar.tf
+    └── foo
+        └── foo.tf
+```
+
+Rakefile:
+
+```ruby
+require 'tfwrapper/raketasks'
+
+# foo/ (default) terraform tasks
+TFWrapper::RakeTasks.install_tasks('tf/foo')
+
+# bar/ terraform tasks
+TFWrapper::RakeTasks.install_tasks('tf/bar', namespace_prefix: 'bar')
+```
+
+``rake -T`` output:
+
+```
+rake bar_tf:apply[target]    # Apply a terraform plan that will provision your resources; specify optional CSV targets
+rake bar_tf:destroy[target]  # Destroy any live resources that are tracked by your state files; specify optional CSV targets
+rake bar_tf:init             # Run terraform init with appropriate arguments
+rake bar_tf:plan[target]     # Output the set plan to be executed by apply; specify optional CSV targets
+rake bar_tf:write_tf_vars    # Write PWD/bar_build.tfvars.json
+rake tf:apply[target]        # Apply a terraform plan that will provision your resources; specify optional CSV targets
+rake tf:destroy[target]      # Destroy any live resources that are tracked by your state files; specify optional CSV targets
+rake tf:init                 # Run terraform init with appropriate arguments
+rake tf:plan[target]         # Output the set plan to be executed by apply; specify optional CSV targets
+rake tf:write_tf_vars        # Write PWD/build.tfvars.json
+```
+
+### Backend Configuration Options
+
+``install_tasks`` accepts a ``backend_config`` hash of options to pass as backend configuration
+to ``terraform init`` via the ``-backend-config='key=value'`` command line argument. This can
+be used when you need to pass some backend configuration in from the environment, such as a
+specific remote state storage path, credentials, etc.
+
+For a simple example, assume we aren't using [state environments](https://www.terraform.io/docs/state/environments.html)
+but instead opt to use specific paths based on a ``ENVIRONMENT`` environment variable.
+
+Our terraform configuration might include something like:
+
+```
+terraform {
+  required_version = "> 0.9.0"
+  backend "consul" {
+    address = "consul.example.com:8500"
+  }
+}
+
+variable "environment" {}
+```
+
+And the Rakefile would pass in the path to store state in Consul, as well as
+passing the ``ENVIRONMENT`` env var into Terraform for use:
+
+```ruby
+require 'tfwrapper/raketasks'
+
+TFWrapper::RakeTasks.install_tasks(
+  '.',
+  tf_vars_from_env: {'environment' => 'ENVIRONMENT'},
+  backend_config: {'path' => "terraform/foo/#{ENVIRONMENT}"}
+)
+```
+
+### Environment Variables to Consul
+
+tfwrapper also includes functionality to push environment variables to Consul
+(as a JSON object) after a successful apply. This is mainly useful when running
+tfwrapper from within Jenkins or another job runner, where they can be used to
+pre-populate user input fields on subsequent runs. This is configured via the
+``consul_url`` and ``consul_env_vars_prefix`` options:
+
+Example Terraform snippet:
+
+```
+variable "foo" {}
+variable "bar" {}
+```
+
+Rakefile:
+
+```ruby
+require 'tfwrapper/raketasks'
+
+TFWrapper::RakeTasks.install_tasks(
+  '.',
+  tf_vars_from_env: {'foo' => 'FOO', 'bar' => 'BAR'},
+  consul_url: 'http://consul.example.com:8500',
+  consul_env_vars_prefix: 'terraform/inputs/foo'
+)
+```
+
+After a successful terraform apply, e.g.:
+
+```
+FOO=one BAR=two bundle exec rake tf:apply
+```
+
+The key in Consul at ``terraform/inputs/foo`` will be set to a JSON hash of the
+environment variables used via ``tf_vars_from_env`` and their values:
+
+```shell
+$ consul kv get terraform/inputs/foo
+{"FOO":"one", "BAR":"two"}
 ```
 
 ## Development
