@@ -18,7 +18,7 @@ end
 
 namespace :spec do
   desc 'run ALL spec tests'
-  task all: %i(unit acceptance)
+  task all: %i[unit acceptance]
 
   desc 'run unit tests'
   RSpec::Core::RakeTask.new(:unit) do |t|
@@ -50,7 +50,7 @@ namespace :yard do
 end
 
 desc 'Run specs and rubocop before pushing'
-task pre_commit: %i(spec:unit rubocop)
+task pre_commit: %i[spec:unit rubocop]
 
 desc 'Display the list of available rake tasks'
 task :help do
