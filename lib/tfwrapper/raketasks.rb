@@ -33,7 +33,7 @@ module TFWrapper
 
     # Generate Rake tasks for working with Terraform at Manheim.
     #
-    # @param tf_dir [String] TerraForm config directory, relative to Rakefile.
+    # @param tf_dir [String] Terraform config directory, relative to Rakefile.
     #   Set to '.' if the Rakefile is in the same directory as the ``.tf``
     #   configuration files.
     # @param [Hash] options to use when adding tasks
@@ -260,14 +260,14 @@ module TFWrapper
         # and also captures them as a combined string
         out_err, status = TFWrapper::Helpers.run_cmd_stream_output(cmd, @tf_dir)
         if status != 0 && out_err.include?('hrottling')
-          raise StandardError, 'TerraForm hit AWS API rate limiting'
+          raise StandardError, 'Terraform hit AWS API rate limiting'
         end
         if status != 0 && out_err.include?('status code: 403')
-          raise StandardError, 'TerraForm command got 403 error - access ' \
+          raise StandardError, 'Terraform command got 403 error - access ' \
             'denied or credentials not propagated'
         end
         if status != 0 && out_err.include?('status code: 401')
-          raise StandardError, 'TerraForm command got 401 error - access ' \
+          raise StandardError, 'Terraform command got 401 error - access ' \
             'denied or credentials not propagated'
         end
       end

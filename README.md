@@ -30,7 +30,7 @@ This Gem provides the following Rake tasks:
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:destroy[aws_instance.foo[1]]`` or
   ``bundle exec rake tf:destroy[aws_instance.foo[1],aws_instance.bar[2]]``; see the
   [destroy documentation](https://www.terraform.io/docs/commands/destroy.html) for more information.
-* __tf:write_tf_vars__ - used as a prerequisite for other tasks; write TerraForm variables to file on disk
+* __tf:write_tf_vars__ - used as a prerequisite for other tasks; write Terraform variables to file on disk
 
 ## Installation
 
@@ -49,9 +49,9 @@ tfwrapper only supports terraform 0.9+. It has been tested up to 0.9.2.
 
 ## Usage
 
-To use the TerraForm rake tasks, require the module in your Rakefile and use the
+To use the Terraform rake tasks, require the module in your Rakefile and use the
 ``install_tasks`` method to set up the tasks. ``install_tasks`` takes one mandatory parameter,
-``tf_dir`` specifying the relative path (from the Rakefile) to the TerraForm configuration.
+``tf_dir`` specifying the relative path (from the Rakefile) to the Terraform configuration.
 
 For a directory layout like:
 
@@ -106,9 +106,9 @@ TFWrapper::RakeTasks.install_tasks('infrastructure/terraform')
 
 ### Environment Variables to Terraform Variables
 
-If you wish to bind the values of environment variables to TerraForm variables, you can specify a mapping
-of TerraForm variable name to environment variable name in the ``tf_vars_from_env`` option; these variables
-will be automatically read from the environment and passed into TerraForm with the appropriate names. The following
+If you wish to bind the values of environment variables to Terraform variables, you can specify a mapping
+of Terraform variable name to environment variable name in the ``tf_vars_from_env`` option; these variables
+will be automatically read from the environment and passed into Terraform with the appropriate names. The following
 example sets the ``consul_address`` terraform variable to the value of the ``CONSUL_HOST`` environment variable
 (defaulting it to ``consul.example.com:8500`` if it is not already set in the environment),
 and likewise for the ``environment`` terraform variable from the ``ENVIRONMENT`` env var.
