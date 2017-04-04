@@ -40,7 +40,7 @@ with 1.9.3 is simply too high to justify.
 Add to your ``Gemfile``:
 
 ```ruby
-gem 'tfwrapper', '~> 0.1.0'
+gem 'tfwrapper', '~> 0.2.0'
 ```
 
 ### Supported Terraform Versions
