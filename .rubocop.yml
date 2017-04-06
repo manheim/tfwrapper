@@ -1,0 +1,22 @@
+Metrics/AbcSize:
+  Max: 22
+
+Metrics/BlockLength:
+  Max: 1000
+
+Metrics/ClassLength:
+  Max: 500
+
+Metrics/MethodLength:
+  Max: 100
+
+# These are to compensate for some warnings that differ by
+# rubocop/ruby version
+Lint/UnneededDisable:
+  Exclude:
+    - 'lib/tfwrapper/raketasks.rb'
+
+Style/MutableConstant:
+  Exclude:
+    - 'lib/tfwrapper/version.rb'
+    - 'spec/acceptance/acceptance_spec.rb'

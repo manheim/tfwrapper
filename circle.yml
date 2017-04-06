@@ -1,0 +1,24 @@
+
+dependencies:
+  cache_directories:
+    - "~/.rvm/gems"
+  pre:
+    - sudo add-apt-repository -y ppa:git-core/ppa && sudo apt-get update && sudo apt-get install git
+  override:
+    - 'bundle install'
+    - 'rvm 2.0.0-p598 exec bundle install'
+    - 'rvm 2.1.8 exec bundle install'
+    - 'rvm 2.2.5 exec bundle install'
+    - 'rvm 2.3.1 exec bundle install'
+
+test:
+  override:
+    - 'bundle exec ruby --version'
+    - 'bundle exec rake spec:unit'
+    - 'bundle exec rake rubocop'
+    - 'rvm 2.0.0-p598 exec bundle exec rake spec:unit'
+    - 'rvm 2.1.8 exec bundle exec rake spec:unit'
+    - 'rvm 2.2.5 exec bundle exec rake spec:unit'
+    - 'rvm 2.3.1 exec bundle exec rake spec:unit'
+    - 'rvm 2.3.1 exec bundle exec rake spec:acceptance'
+    - 'bundle exec rake yard:generate'
