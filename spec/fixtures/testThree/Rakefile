@@ -13,14 +13,14 @@ TFWrapper::RakeTasks.install_tasks(
   'foo',
   backend_config: { 'path' => 'terraform/testThreeFoo' },
   tf_vars_from_env: { 'foo' => 'FOO' },
-  tf_extra_vars: { 'bar' => 'barval' }
+  tf_extra_vars: { 'bar' => 'barONEval' }
 )
 
 TFWrapper::RakeTasks.install_tasks(
   'bar',
   namespace_prefix: 'bar',
   tf_vars_from_env: { 'foo' => 'FOO' },
-  tf_extra_vars: { 'bar' => 'barval' }
+  tf_extra_vars: { 'bar' => 'barTWOval' }
 )
 
 TFWrapper::RakeTasks.install_tasks(

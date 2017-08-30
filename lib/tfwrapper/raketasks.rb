@@ -92,6 +92,7 @@ module TFWrapper
       install_refresh
       install_destroy
       install_write_tf_vars
+      install_output
     end
 
     # add the 'tf:init' Rake task. This checks environment variables,
@@ -172,6 +173,24 @@ module TFWrapper
           ].join(' ')
 
           terraform_runner(cmd)
+        end
+      end
+    end
+
+    # add the 'tf:output' Rake task
+    def install_output
+      namespace nsprefix do
+        task output: [
+          :"#{nsprefix}:init",
+          :"#{nsprefix}:refresh"
+        ] do
+          terraform_runner('terraform output')
+        end
+        task output_json: [
+          :"#{nsprefix}:init",
+          :"#{nsprefix}:refresh"
+        ] do
+          terraform_runner('terraform output -json')
         end
       end
     end

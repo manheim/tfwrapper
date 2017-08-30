@@ -212,12 +212,14 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:install_refresh)
       allow(subject).to receive(:install_destroy)
       allow(subject).to receive(:install_write_tf_vars)
+      allow(subject).to receive(:install_output)
       expect(subject).to receive(:install_init).once
       expect(subject).to receive(:install_plan).once
       expect(subject).to receive(:install_apply).once
       expect(subject).to receive(:install_refresh).once
       expect(subject).to receive(:install_destroy).once
       expect(subject).to receive(:install_write_tf_vars).once
+      expect(subject).to receive(:install_output).once
       subject.install
     end
   end
@@ -556,6 +558,47 @@ describe TFWrapper::RakeTasks do
           .once.with('Terraform vars written to: foo_file.tfvars.json')
         Rake.application['foo_tf:write_tf_vars'].invoke
       end
+    end
+  end
+  describe '#install_output' do
+    # these let/before/after come from bundler's gem_helper_spec.rb
+    let!(:rake_application) { Rake.application }
+    before(:each) do
+      Rake::Task.clear
+      Rake.application = Rake::Application.new
+    end
+    after(:each) do
+      Rake.application = rake_application
+    end
+    before do
+      subject.install_output
+    end
+
+    it 'adds the output task' do
+      expect(Rake.application['tf:output']).to be_instance_of(Rake::Task)
+      expect(Rake.application['tf:output'].prerequisites)
+        .to eq(%w[tf:init tf:refresh])
+    end
+    it 'runs the output command' do
+      Rake.application['tf:output'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform output')
+      Rake.application['tf:output'].invoke
+    end
+    it 'adds the output_json task' do
+      expect(Rake.application['tf:output_json']).to be_instance_of(Rake::Task)
+      expect(Rake.application['tf:output_json'].prerequisites)
+        .to eq(%w[tf:init tf:refresh])
+    end
+    it 'runs the output -json command' do
+      Rake.application['tf:output_json'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform output -json')
+      Rake.application['tf:output_json'].invoke
     end
   end
   describe '#terraform_vars' do
