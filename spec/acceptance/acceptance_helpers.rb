@@ -9,6 +9,9 @@ def cleanup_tf
   Dir.glob("#{fixture_dir}/**/.terraform").each do |d|
     FileUtils.rmtree(d) if File.directory?(d)
   end
+  Dir.glob("#{fixture_dir}/**/terraform.tfstate*").each do |f|
+    File.delete(f)
+  end
 end
 
 class HashicorpFetcher

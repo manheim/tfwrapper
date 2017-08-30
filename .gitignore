@@ -13,6 +13,7 @@
 /vendor/
 .terraform
 build.tfvars.json
+**/terraform.tfstate.backup
 
 # Used by dotenv library to load environment variables.
 # .env
