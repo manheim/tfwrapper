@@ -20,3 +20,7 @@ Style/MutableConstant:
   Exclude:
     - 'lib/tfwrapper/version.rb'
     - 'spec/acceptance/acceptance_spec.rb'
+
+Layout/MultilineMethodCallIndentation:
+  Exclude:
+    - 'spec/unit/raketasks_spec.rb'

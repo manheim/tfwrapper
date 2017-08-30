@@ -21,7 +21,7 @@ describe 'tfwrapper' do
     @server.stop
   end
   after(:each) { cleanup_tf }
-  context 'testOne - basic TF with remote state', :order => :defined do
+  context 'testOne - basic TF with remote state', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures')
@@ -145,11 +145,13 @@ describe 'tfwrapper' do
         expect(@ecode.exitstatus).to eq(0)
       end
       it 'shows the outputs' do
-        expect(@out_err).to match /.*{\s+"foo_variable": {\s+"sensitive": false,\s+"type": "string",\s+"value": "bar"\s+}\s+}.*/
+        expect(@out_err).to match(/.*{\s+"foo_variable":\s{\s+"sensitive":\s
+                                   false,\s+"type":\s"string",\s+"value":\s
+                                   "bar"\s+}\s+}.*/x)
       end
     end
   end
-  context 'testTwo - TF with vars, remote state and consul env var update', :order => :defined do
+  context 'testTwo - TF w/ vars, rmt state & consul env var', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures', 'testTwo')
@@ -334,7 +336,7 @@ describe 'tfwrapper' do
       end
     end
   end
-  context 'testThree - TF with namespaces', :order => :defined do
+  context 'testThree - TF with namespaces', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures', 'testThree')
