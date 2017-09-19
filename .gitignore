@@ -52,3 +52,13 @@ Gemfile.lock
 
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
+
+# Because terraform
+*.tfstate.backup
+
+# Some of us like out ctags.
+tags
+
+#And we like vim. :-P
+*.swp
+*.swo
