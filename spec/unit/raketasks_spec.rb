@@ -354,7 +354,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json')
+        .with('terraform apply -auto-approve -var-file file.tfvars.json')
       expect(subject).to_not receive(:update_consul_stack_env_vars)
       Rake.application['tf:apply'].invoke
     end
@@ -363,7 +363,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json ' \
+        .with('terraform apply -auto-approve -var-file file.tfvars.json ' \
               '-target tar.get[1]')
       Rake.application['tf:apply'].invoke('tar.get[1]')
     end
@@ -372,7 +372,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json ' \
+        .with('terraform apply -auto-approve -var-file file.tfvars.json ' \
               '-target tar.get[1] -target t.gt[2] -target my.target[3]')
       Rake.application['tf:apply'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
@@ -385,7 +385,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:update_consul_stack_env_vars)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json')
+        .with('terraform apply -auto-approve -var-file file.tfvars.json')
       expect(subject).to receive(:update_consul_stack_env_vars).once
       Rake.application['tf:apply'].invoke
     end

@@ -147,7 +147,7 @@ module TFWrapper
           :"#{nsprefix}:plan"
         ] do |_t, args|
           cmd = cmd_with_targets(
-            ['terraform', 'apply', "-var-file #{var_file_path}"],
+            ['terraform', 'apply', "-auto-approve", "-var-file #{var_file_path}"],
             args[:target],
             args.extras
           )

@@ -5,7 +5,7 @@ require_relative 'acceptance_helpers'
 require 'open3'
 require 'json'
 
-TF_VERSION = '0.9.2'
+TF_VERSION = '0.10.6'
 
 Diplomat.configure do |config|
   config.url = 'http://127.0.0.1:8500'
@@ -84,7 +84,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testOne: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -103,7 +103,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testOne'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('bar')
@@ -183,7 +183,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testTwo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -206,7 +206,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testTwo/foo'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -242,7 +242,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testTwo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -265,7 +265,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testTwo/bar'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -372,7 +372,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testThreeFoo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -395,7 +395,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeFoo'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -429,7 +429,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testThreeBar: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -452,7 +452,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBar'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -486,7 +486,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include('terraform_runner command: \'terraform apply -auto-approve -var-file')
         expect(@out_err).to include('consul_keys.testThreeBaz: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -508,7 +508,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBaz'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(2)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
