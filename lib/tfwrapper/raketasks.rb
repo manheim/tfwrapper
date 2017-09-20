@@ -342,7 +342,7 @@ module TFWrapper
       require 'diplomat'
       require 'json'
       data = {}
-      @tf_vars_from_env.values.each { |k| data[k] = ENV[k] }
+      @tf_vars_from_env.each_value { |k| data[k] = ENV[k] }
 
       Diplomat.configure do |config|
         config.url = @consul_url
