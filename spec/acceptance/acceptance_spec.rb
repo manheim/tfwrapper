@@ -5,7 +5,7 @@ require_relative 'acceptance_helpers'
 require 'open3'
 require 'json'
 
-TF_VERSION = '0.10.2'
+TF_VERSION = get_tf_version
 if Gem::Version.new(TF_VERSION) >= Gem::Version.new('0.10.0')
   EXPECTED_SERIAL = 2
   APPLY_CMD = 'terraform apply -auto-approve'
