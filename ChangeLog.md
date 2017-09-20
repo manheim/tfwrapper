@@ -6,7 +6,7 @@ Version 0.3.0
   - Add '-auto-approve' to terraform apply command if running with tf >= 0.10.0
   - Update acceptance tests to work with terraform 0.9.x and 0.10.x
   - Acceptance test logic to find the latest terraform release version from GitHub API
-  - Run acceptance tests for multiple terraform versions (currently: 0.9.0, 0.9.7, 0.10.0, 0.10.2, latest)
+  - Run acceptance tests for multiple terraform versions (currently: 0.9.2, 0.9.7, 0.10.0, 0.10.2, latest)
 
 Version 0.2.0
 
