@@ -151,7 +151,7 @@ module TFWrapper
           :"#{nsprefix}:write_tf_vars",
           :"#{nsprefix}:plan"
         ] do |_t, args|
-          cmd_arr = ['terraform', 'apply']
+          cmd_arr = %w[terraform apply]
           cmd_arr << '-auto-approve' if tf_version >= Gem::Version.new('0.10.0')
           cmd_arr << "-var-file #{var_file_path}"
           cmd = cmd_with_targets(

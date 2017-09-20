@@ -60,7 +60,8 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
-      expect(cls.instance_variable_get('@tf_version')).to eq(Gem::Version.new('0.0.0'))
+      expect(cls.instance_variable_get('@tf_version'))
+        .to eq(Gem::Version.new('0.0.0'))
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
@@ -243,7 +244,8 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the init command with backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
-      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.0.0'))
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.0.0'))
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
@@ -255,7 +257,8 @@ describe TFWrapper::RakeTasks do
         'foo'     => 'bar'
       )
       allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:check_tf_version).and_return(Gem::Version.new('0.9.5'))
+      allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.9.5'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
@@ -265,7 +268,8 @@ describe TFWrapper::RakeTasks do
         ' -backend-config=\'path=consulprefix\''\
         ' -backend-config=\'foo=bar\'')
       Rake.application['tf:init'].invoke
-      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.9.5'))
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.9.5'))
     end
     it 'runs the init command without backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
@@ -275,14 +279,16 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[])
       subject.instance_variable_set('@backend_config', {})
       allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:check_tf_version).and_return(Gem::Version.new('0.10.2'))
+      allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.10.2'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false')
       Rake.application['tf:init'].invoke
-      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.10.2'))
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.10.2'))
     end
   end
   describe '#install_plan' do
@@ -355,7 +361,8 @@ describe TFWrapper::RakeTasks do
     end
     context 'terraform version 0.9.5' do
       before(:each) do
-        allow(subject).to receive(:tf_version).and_return(Gem::Version.new('0.9.5'))
+        allow(subject).to receive(:tf_version)
+          .and_return(Gem::Version.new('0.9.5'))
       end
       it 'runs the apply command with no targets' do
         Rake.application['tf:apply'].clear_prerequisites
@@ -387,7 +394,7 @@ describe TFWrapper::RakeTasks do
           'tar.get[1]', 't.gt[2]', 'my.target[3]'
         )
       end
-      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix not nil' do
+      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix !nil' do
         subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
         Rake.application['tf:apply'].clear_prerequisites
         allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
@@ -401,7 +408,8 @@ describe TFWrapper::RakeTasks do
     end
     context 'terraform version 0.10.2' do
       before(:each) do
-        allow(subject).to receive(:tf_version).and_return(Gem::Version.new('0.10.2'))
+        allow(subject).to receive(:tf_version)
+          .and_return(Gem::Version.new('0.10.2'))
       end
       it 'runs the apply command with no targets' do
         Rake.application['tf:apply'].clear_prerequisites
@@ -433,7 +441,7 @@ describe TFWrapper::RakeTasks do
           'tar.get[1]', 't.gt[2]', 'my.target[3]'
         )
       end
-      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix not nil' do
+      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix !nil' do
         subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
         Rake.application['tf:apply'].clear_prerequisites
         allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')

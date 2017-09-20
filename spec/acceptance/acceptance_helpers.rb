@@ -16,8 +16,10 @@ def cleanup_tf
   end
 end
 
-def get_tf_version
-  return ENV['TF_VERSION'] if ENV.include?('TF_VERSION') && ENV['TF_VERSION'] != 'latest'
+def desired_tf_version
+  if ENV.include?('TF_VERSION') && ENV['TF_VERSION'] != 'latest'
+    return ENV['TF_VERSION']
+  end
   # else get the latest release from GitHub
   resp = Faraday.get('https://api.github.com/repos/hashicorp/terraform/releases/latest')
   rel = JSON.parse(resp.body)['tag_name'].sub(/^v/, '')
