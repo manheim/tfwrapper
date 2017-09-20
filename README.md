@@ -45,7 +45,7 @@ gem 'tfwrapper', '~> 0.2.0'
 
 ### Supported Terraform Versions
 
-tfwrapper only supports terraform 0.9+. It has been tested up to 0.9.2.
+tfwrapper only supports terraform 0.9+. It is tested against multiple versions from 0.9.2 to 0.10.2 and the current release.
 
 ## Usage
 

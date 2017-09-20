@@ -5,7 +5,14 @@ require_relative 'acceptance_helpers'
 require 'open3'
 require 'json'
 
-TF_VERSION = '0.9.2'
+TF_VERSION = desired_tf_version
+if Gem::Version.new(TF_VERSION) >= Gem::Version.new('0.10.0')
+  EXPECTED_SERIAL = 2
+  APPLY_CMD = 'terraform apply -auto-approve'
+else
+  EXPECTED_SERIAL = 1
+  APPLY_CMD = 'terraform apply'
+end
 
 Diplomat.configure do |config|
   config.url = 'http://127.0.0.1:8500'
@@ -21,7 +28,7 @@ describe 'tfwrapper' do
     @server.stop
   end
   after(:each) { cleanup_tf }
-  context 'testOne - basic TF with remote state' do
+  context 'testOne - basic TF with remote state', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures')
@@ -84,7 +91,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testOne: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -103,7 +110,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testOne'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('bar')
@@ -112,8 +119,46 @@ describe 'tfwrapper' do
         expect(state['modules'][0]['resources'].length).to eq(1)
       end
     end
+    describe 'tf:output' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake tf:output 2>/dev/null',
+          chdir: @fixturepath
+        )
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to include('foo_variable = bar')
+      end
+    end
+    describe 'tf:output_json' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake tf:output_json 2>/dev/null',
+          chdir: @fixturepath
+        )
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to match(/.*{\s+"foo_variable":\s{\s+"sensitive":\s
+                                   false,\s+"type":\s"string",\s+"value":\s
+                                   "bar"\s+}\s+}.*/x)
+      end
+    end
   end
-  context 'testTwo - TF with vars, remote state and consul env var update' do
+  context 'testTwo - TF w/ vars, rmt state & consul env var', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures', 'testTwo')
@@ -183,7 +228,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testTwo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -206,7 +251,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testTwo/foo'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -242,7 +287,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testTwo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -265,7 +310,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testTwo/bar'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -276,8 +321,29 @@ describe 'tfwrapper' do
         expect(state['modules'][0]['resources'].length).to eq(1)
       end
     end
+    describe 'tf:output' do
+      before(:all) do
+        ENV['TFSUFFIX'] = 'bar'
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake tf:output 2>/dev/null',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'build.tfvars.json')
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to include('foo_variable = fooval')
+        expect(@out_err).to include('bar_variable = barval')
+      end
+    end
   end
-  context 'testThree - TF with namespaces' do
+  context 'testThree - TF with namespaces', order: :defined do
     before(:all) do
       @fixturepath = File.absolute_path(
         File.join(File.dirname(__FILE__), '..', 'fixtures', 'testThree')
@@ -372,38 +438,61 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testThreeFoo: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
         )
         expect(@out_err).to include(
-          "Outputs:\n\nbar_variable = barval\nfoo_variable = fooval"
+          "Outputs:\n\nbar_variable = barONEval\nfoo_variable = fooval"
         )
       end
       it 'writes the vars file' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq('foo' => 'fooval', 'bar' => 'barval')
+          .to eq('foo' => 'fooval', 'bar' => 'barONEval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testThreeFoo/foo')).to eq('fooval')
-        expect(Diplomat::Kv.get('testThreeFoo/bar')).to eq('barval')
+        expect(Diplomat::Kv.get('testThreeFoo/bar')).to eq('barONEval')
       end
       it 'writes remote state to consul' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeFoo'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
         expect(state['modules'][0]['outputs']['bar_variable']['value'])
-          .to eq('barval')
+          .to eq('barONEval')
         expect(state['modules'][0]['resources'])
           .to include('consul_keys.testThreeFoo')
         expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+    end
+    describe 'tf:output' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake tf:output 2>/dev/null',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to include('foo_variable = fooval')
+        expect(@out_err).to include('bar_variable = barONEval')
       end
     end
     describe 'bar_tf:apply' do
@@ -429,38 +518,61 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testThreeBar: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
         )
         expect(@out_err).to include(
-          "Outputs:\n\nbar_variable = barval\nfoo_variable = fooval"
+          "Outputs:\n\nbar_variable = barTWOval\nfoo_variable = fooval"
         )
       end
       it 'writes the vars file' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
         expect(JSON.parse(c))
-          .to eq('foo' => 'fooval', 'bar' => 'barval')
+          .to eq('foo' => 'fooval', 'bar' => 'barTWOval')
       end
       it 'sets the consul keys' do
         expect(Diplomat::Kv.get('testThreeBar/foo')).to eq('fooval')
-        expect(Diplomat::Kv.get('testThreeBar/bar')).to eq('barval')
+        expect(Diplomat::Kv.get('testThreeBar/bar')).to eq('barTWOval')
       end
       it 'writes remote state to consul' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBar'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
         expect(state['modules'][0]['outputs']['bar_variable']['value'])
-          .to eq('barval')
+          .to eq('barTWOval')
         expect(state['modules'][0]['resources'])
           .to include('consul_keys.testThreeBar')
         expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+    end
+    describe 'bar_tf:output' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake bar_tf:output 2>/dev/null',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'bar_build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to include('foo_variable = fooval')
+        expect(@out_err).to include('bar_variable = barTWOval')
       end
     end
     describe 'baz_tf:apply' do
@@ -486,7 +598,7 @@ describe 'tfwrapper' do
       end
       it 'runs apply correctly and succeeds' do
         expect(@out_err)
-          .to include('terraform_runner command: \'terraform apply -var-file')
+          .to include("terraform_runner command: '#{APPLY_CMD} -var-file")
         expect(@out_err).to include('consul_keys.testThreeBaz: Creating...')
         expect(@out_err).to include(
           'Apply complete! Resources: 1 added, 0 changed, 0 destroyed.'
@@ -508,7 +620,7 @@ describe 'tfwrapper' do
         state = JSON.parse(Diplomat::Kv.get('terraform/testThreeBaz'))
         expect(state['version']).to eq(3)
         expect(state['terraform_version']).to eq(TF_VERSION)
-        expect(state['serial']).to eq(1)
+        expect(state['serial']).to eq(EXPECTED_SERIAL)
         expect(state['modules'].length).to eq(1)
         expect(state['modules'][0]['outputs']['foo_variable']['value'])
           .to eq('fooval')
@@ -519,6 +631,29 @@ describe 'tfwrapper' do
       it 'writes the environment variables to Consul' do
         cvars = JSON.parse(Diplomat::Kv.get('vars/testThreeBaz'))
         expect(cvars).to eq('FOO' => 'fooval')
+      end
+    end
+    describe 'baz_tf:output' do
+      before(:all) do
+        @out_err, @ecode = Open3.capture2e(
+          'timeout -k 60 45 bundle exec rake baz_tf:output 2>/dev/null',
+          chdir: @fixturepath
+        )
+        @varpath = File.join(@fixturepath, 'baz_build.tfvars.json')
+      end
+      after(:all) do
+        File.delete(@varpath) if File.file?(@varpath)
+      end
+      it 'does not time out' do
+        expect(@ecode.exitstatus).to_not eq(124)
+        expect(@ecode.exitstatus).to_not eq(137)
+      end
+      it 'exits zero' do
+        expect(@ecode.exitstatus).to eq(0)
+      end
+      it 'shows the outputs' do
+        expect(@out_err).to include('foo_variable = fooval')
+        expect(@out_err).to_not include('bar_variable = ')
       end
     end
   end

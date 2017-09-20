@@ -60,6 +60,8 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
+      expect(cls.instance_variable_get('@tf_version'))
+        .to eq(Gem::Version.new('0.0.0'))
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
@@ -212,12 +214,14 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:install_refresh)
       allow(subject).to receive(:install_destroy)
       allow(subject).to receive(:install_write_tf_vars)
+      allow(subject).to receive(:install_output)
       expect(subject).to receive(:install_init).once
       expect(subject).to receive(:install_plan).once
       expect(subject).to receive(:install_apply).once
       expect(subject).to receive(:install_refresh).once
       expect(subject).to receive(:install_destroy).once
       expect(subject).to receive(:install_write_tf_vars).once
+      expect(subject).to receive(:install_output).once
       subject.install
     end
   end
@@ -240,6 +244,8 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the init command with backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.0.0'))
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
@@ -252,6 +258,7 @@ describe TFWrapper::RakeTasks do
       )
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.9.5'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
@@ -261,6 +268,8 @@ describe TFWrapper::RakeTasks do
         ' -backend-config=\'path=consulprefix\''\
         ' -backend-config=\'foo=bar\'')
       Rake.application['tf:init'].invoke
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.9.5'))
     end
     it 'runs the init command without backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
@@ -271,12 +280,15 @@ describe TFWrapper::RakeTasks do
       subject.instance_variable_set('@backend_config', {})
       allow(subject).to receive(:terraform_runner)
       allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.10.2'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false')
       Rake.application['tf:init'].invoke
+      expect(subject.instance_variable_get(:@tf_version))
+        .to eq(Gem::Version.new('0.10.2'))
     end
   end
   describe '#install_plan' do
@@ -341,53 +353,105 @@ describe TFWrapper::RakeTasks do
     before do
       subject.install_apply
     end
-
     it 'adds the apply task' do
       expect(Rake.application['tf:apply']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:apply'].prerequisites)
         .to eq(%w[tf:init tf:write_tf_vars tf:plan])
       expect(Rake.application['tf:apply'].arg_names).to eq([:target])
     end
-    it 'runs the apply command with no targets' do
-      Rake.application['tf:apply'].clear_prerequisites
-      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
-      allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:update_consul_stack_env_vars)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json')
-      expect(subject).to_not receive(:update_consul_stack_env_vars)
-      Rake.application['tf:apply'].invoke
+    context 'terraform version 0.9.5' do
+      before(:each) do
+        allow(subject).to receive(:tf_version)
+          .and_return(Gem::Version.new('0.9.5'))
+      end
+      it 'runs the apply command with no targets' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        allow(subject).to receive(:update_consul_stack_env_vars)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -var-file file.tfvars.json')
+        expect(subject).to_not receive(:update_consul_stack_env_vars)
+        Rake.application['tf:apply'].invoke
+      end
+      it 'runs the apply command with one target' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -var-file file.tfvars.json ' \
+                '-target tar.get[1]')
+        Rake.application['tf:apply'].invoke('tar.get[1]')
+      end
+      it 'runs the apply command with three targets' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -var-file file.tfvars.json ' \
+                '-target tar.get[1] -target t.gt[2] -target my.target[3]')
+        Rake.application['tf:apply'].invoke(
+          'tar.get[1]', 't.gt[2]', 'my.target[3]'
+        )
+      end
+      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix !nil' do
+        subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        allow(subject).to receive(:update_consul_stack_env_vars)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -var-file file.tfvars.json')
+        expect(subject).to receive(:update_consul_stack_env_vars).once
+        Rake.application['tf:apply'].invoke
+      end
     end
-    it 'runs the apply command with one target' do
-      Rake.application['tf:apply'].clear_prerequisites
-      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
-      allow(subject).to receive(:terraform_runner)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json ' \
-              '-target tar.get[1]')
-      Rake.application['tf:apply'].invoke('tar.get[1]')
-    end
-    it 'runs the apply command with three targets' do
-      Rake.application['tf:apply'].clear_prerequisites
-      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
-      allow(subject).to receive(:terraform_runner)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json ' \
-              '-target tar.get[1] -target t.gt[2] -target my.target[3]')
-      Rake.application['tf:apply'].invoke(
-        'tar.get[1]', 't.gt[2]', 'my.target[3]'
-      )
-    end
-    it 'runs update_consul_stack_env_vars if consul_env_vars_prefix not nil' do
-      subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
-      Rake.application['tf:apply'].clear_prerequisites
-      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
-      allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:update_consul_stack_env_vars)
-      expect(subject).to receive(:terraform_runner).once
-        .with('terraform apply -var-file file.tfvars.json')
-      expect(subject).to receive(:update_consul_stack_env_vars).once
-      Rake.application['tf:apply'].invoke
+    context 'terraform version 0.10.2' do
+      before(:each) do
+        allow(subject).to receive(:tf_version)
+          .and_return(Gem::Version.new('0.10.2'))
+      end
+      it 'runs the apply command with no targets' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        allow(subject).to receive(:update_consul_stack_env_vars)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -auto-approve -var-file file.tfvars.json')
+        expect(subject).to_not receive(:update_consul_stack_env_vars)
+        Rake.application['tf:apply'].invoke
+      end
+      it 'runs the apply command with one target' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -auto-approve -var-file file.tfvars.json ' \
+                '-target tar.get[1]')
+        Rake.application['tf:apply'].invoke('tar.get[1]')
+      end
+      it 'runs the apply command with three targets' do
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -auto-approve -var-file file.tfvars.json ' \
+                '-target tar.get[1] -target t.gt[2] -target my.target[3]')
+        Rake.application['tf:apply'].invoke(
+          'tar.get[1]', 't.gt[2]', 'my.target[3]'
+        )
+      end
+      it 'runs update_consul_stack_env_vars if consul_env_vars_prefix !nil' do
+        subject.instance_variable_set('@consul_env_vars_prefix', 'foo')
+        Rake.application['tf:apply'].clear_prerequisites
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        allow(subject).to receive(:terraform_runner)
+        allow(subject).to receive(:update_consul_stack_env_vars)
+        expect(subject).to receive(:terraform_runner).once
+          .with('terraform apply -auto-approve -var-file file.tfvars.json')
+        expect(subject).to receive(:update_consul_stack_env_vars).once
+        Rake.application['tf:apply'].invoke
+      end
     end
   end
   describe '#install_refresh' do
@@ -558,6 +622,47 @@ describe TFWrapper::RakeTasks do
       end
     end
   end
+  describe '#install_output' do
+    # these let/before/after come from bundler's gem_helper_spec.rb
+    let!(:rake_application) { Rake.application }
+    before(:each) do
+      Rake::Task.clear
+      Rake.application = Rake::Application.new
+    end
+    after(:each) do
+      Rake.application = rake_application
+    end
+    before do
+      subject.install_output
+    end
+
+    it 'adds the output task' do
+      expect(Rake.application['tf:output']).to be_instance_of(Rake::Task)
+      expect(Rake.application['tf:output'].prerequisites)
+        .to eq(%w[tf:init tf:refresh])
+    end
+    it 'runs the output command' do
+      Rake.application['tf:output'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform output')
+      Rake.application['tf:output'].invoke
+    end
+    it 'adds the output_json task' do
+      expect(Rake.application['tf:output_json']).to be_instance_of(Rake::Task)
+      expect(Rake.application['tf:output_json'].prerequisites)
+        .to eq(%w[tf:init tf:refresh])
+    end
+    it 'runs the output -json command' do
+      Rake.application['tf:output_json'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      expect(subject).to receive(:terraform_runner).once
+        .with('terraform output -json')
+      Rake.application['tf:output_json'].invoke
+    end
+  end
   describe '#terraform_vars' do
     it 'builds a hash and sets overrides' do
       v_from_e = { 'vfe1' => 'vfe1name', 'vfe2' => 'vfe2name' }
@@ -718,7 +823,7 @@ describe TFWrapper::RakeTasks do
         .and_return(['Terraform v3.4.5-dev (abcde1234+CHANGES)', 0])
       allow(Gem::Version).to receive(:new).and_return(ver)
       expect(Gem::Version).to receive(:new).once.with('3.4.5')
-      subject.check_tf_version
+      expect(subject.check_tf_version).to eq(ver)
     end
     it 'fails if the version cannot be identified' do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)

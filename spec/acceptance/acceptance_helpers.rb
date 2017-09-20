@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'ffi'
+require 'faraday'
+require 'json'
 
 def cleanup_tf
   fixture_dir = File.absolute_path(
@@ -9,6 +11,20 @@ def cleanup_tf
   Dir.glob("#{fixture_dir}/**/.terraform").each do |d|
     FileUtils.rmtree(d) if File.directory?(d)
   end
+  Dir.glob("#{fixture_dir}/**/terraform.tfstate*").each do |f|
+    File.delete(f)
+  end
+end
+
+def desired_tf_version
+  if ENV.include?('TF_VERSION') && ENV['TF_VERSION'] != 'latest'
+    return ENV['TF_VERSION']
+  end
+  # else get the latest release from GitHub
+  resp = Faraday.get('https://api.github.com/repos/hashicorp/terraform/releases/latest')
+  rel = JSON.parse(resp.body)['tag_name'].sub(/^v/, '')
+  puts "Found latest terraform release on GitHub: #{rel}"
+  rel
 end
 
 class HashicorpFetcher

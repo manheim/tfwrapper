@@ -31,6 +31,8 @@ module TFWrapper
       Gem::Version.new('0.9.0')
     end
 
+    attr_reader :tf_version
+
     # Generate Rake tasks for working with Terraform at Manheim.
     #
     # @param tf_dir [String] Terraform config directory, relative to Rakefile.
@@ -67,6 +69,8 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
+      # default to lowest possible version; this is set in the 'init' task
+      @tf_version = Gem::Version.new('0.0.0')
       # rubocop:disable Style/GuardClause
       if @consul_url.nil? && !@consul_env_vars_prefix.nil?
         raise StandardError, 'Cannot set env vars in Consul when consul_url ' \
@@ -92,6 +96,7 @@ module TFWrapper
       install_refresh
       install_destroy
       install_write_tf_vars
+      install_output
     end
 
     # add the 'tf:init' Rake task. This checks environment variables,
@@ -102,7 +107,7 @@ module TFWrapper
         desc 'Run terraform init with appropriate arguments'
         task :init do
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
-          check_tf_version
+          @tf_version = check_tf_version
           cmd = [
             'terraform',
             'init',
@@ -146,8 +151,11 @@ module TFWrapper
           :"#{nsprefix}:write_tf_vars",
           :"#{nsprefix}:plan"
         ] do |_t, args|
+          cmd_arr = %w[terraform apply]
+          cmd_arr << '-auto-approve' if tf_version >= Gem::Version.new('0.10.0')
+          cmd_arr << "-var-file #{var_file_path}"
           cmd = cmd_with_targets(
-            ['terraform', 'apply', "-var-file #{var_file_path}"],
+            cmd_arr,
             args[:target],
             args.extras
           )
@@ -172,6 +180,24 @@ module TFWrapper
           ].join(' ')
 
           terraform_runner(cmd)
+        end
+      end
+    end
+
+    # add the 'tf:output' Rake task
+    def install_output
+      namespace nsprefix do
+        task output: [
+          :"#{nsprefix}:init",
+          :"#{nsprefix}:refresh"
+        ] do
+          terraform_runner('terraform output')
+        end
+        task output_json: [
+          :"#{nsprefix}:init",
+          :"#{nsprefix}:refresh"
+        ] do
+          terraform_runner('terraform output -json')
         end
       end
     end
@@ -212,7 +238,7 @@ module TFWrapper
           tf_vars = terraform_vars
           puts 'Terraform vars:'
           tf_vars.sort.map do |k, v|
-            if k == 'aws_access_key' || k == 'aws_secret_key'
+            if %w[aws_access_key aws_secret_key].include?(k)
               puts "#{k} => (redacted)"
             else
               puts "#{k} => #{v}"
@@ -308,6 +334,7 @@ module TFWrapper
           "binary reports itself as #{m[1]} (#{all_out_err})"
       end
       puts "Running with: #{all_out_err}"
+      tf_ver
     end
 
     # update stack status in Consul
@@ -315,7 +342,7 @@ module TFWrapper
       require 'diplomat'
       require 'json'
       data = {}
-      @tf_vars_from_env.values.each { |k| data[k] = ENV[k] }
+      @tf_vars_from_env.each_value { |k| data[k] = ENV[k] }
 
       Diplomat.configure do |config|
         config.url = @consul_url
