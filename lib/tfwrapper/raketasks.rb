@@ -31,6 +31,8 @@ module TFWrapper
       Gem::Version.new('0.9.0')
     end
 
+    attr_reader :tf_version
+
     # Generate Rake tasks for working with Terraform at Manheim.
     #
     # @param tf_dir [String] Terraform config directory, relative to Rakefile.
@@ -67,6 +69,8 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
+      # default to lowest possible version; this is set in the 'init' task
+      @tf_version = Gem::Version.new('0.0.0')
       # rubocop:disable Style/GuardClause
       if @consul_url.nil? && !@consul_env_vars_prefix.nil?
         raise StandardError, 'Cannot set env vars in Consul when consul_url ' \
@@ -103,7 +107,7 @@ module TFWrapper
         desc 'Run terraform init with appropriate arguments'
         task :init do
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
-          check_tf_version
+          @tf_version = check_tf_version
           cmd = [
             'terraform',
             'init',
@@ -327,6 +331,7 @@ module TFWrapper
           "binary reports itself as #{m[1]} (#{all_out_err})"
       end
       puts "Running with: #{all_out_err}"
+      tf_ver
     end
 
     # update stack status in Consul

@@ -60,6 +60,7 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
+      expect(cls.instance_variable_get('@tf_version')).to eq(Gem::Version.new('0.0.0'))
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
@@ -242,6 +243,7 @@ describe TFWrapper::RakeTasks do
     end
     it 'runs the init command with backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
+      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.0.0'))
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
@@ -253,7 +255,7 @@ describe TFWrapper::RakeTasks do
         'foo'     => 'bar'
       )
       allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:check_tf_version)
+      allow(subject).to receive(:check_tf_version).and_return(Gem::Version.new('0.9.5'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
@@ -263,6 +265,7 @@ describe TFWrapper::RakeTasks do
         ' -backend-config=\'path=consulprefix\''\
         ' -backend-config=\'foo=bar\'')
       Rake.application['tf:init'].invoke
+      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.9.5'))
     end
     it 'runs the init command without backend_config options' do
       Rake.application['tf:init'].clear_prerequisites
@@ -272,13 +275,14 @@ describe TFWrapper::RakeTasks do
       allow(ENV).to receive(:[])
       subject.instance_variable_set('@backend_config', {})
       allow(subject).to receive(:terraform_runner)
-      allow(subject).to receive(:check_tf_version)
+      allow(subject).to receive(:check_tf_version).and_return(Gem::Version.new('0.10.2'))
       expect(TFWrapper::Helpers)
         .to receive(:check_env_vars).once.ordered.with(vars.values)
       expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false')
       Rake.application['tf:init'].invoke
+      expect(subject.instance_variable_get(:@tf_version)).to eq(Gem::Version.new('0.10.2'))
     end
   end
   describe '#install_plan' do
@@ -761,7 +765,7 @@ describe TFWrapper::RakeTasks do
         .and_return(['Terraform v3.4.5-dev (abcde1234+CHANGES)', 0])
       allow(Gem::Version).to receive(:new).and_return(ver)
       expect(Gem::Version).to receive(:new).once.with('3.4.5')
-      subject.check_tf_version
+      expect(subject.check_tf_version).to eq(ver)
     end
     it 'fails if the version cannot be identified' do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
