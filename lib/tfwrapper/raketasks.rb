@@ -7,7 +7,7 @@ require 'rubygems'
 require 'tfwrapper/version'
 
 module TFWrapper
-  # Generates Rake tasks for working with Terraform at Manheim.
+  # Generates Rake tasks for working with Terraform.
   #
   # Before using this, the ``CONSUL_HOST`` environment variable must be set.
   #
@@ -34,7 +34,7 @@ module TFWrapper
 
     attr_reader :tf_version
 
-    # Generate Rake tasks for working with Terraform at Manheim.
+    # Generate Rake tasks for working with Terraform.
     #
     # @param tf_dir [String] Terraform config directory, relative to Rakefile.
     #   Set to '.' if the Rakefile is in the same directory as the ``.tf``
