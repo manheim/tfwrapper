@@ -8,10 +8,6 @@ require 'tfwrapper/version'
 
 module TFWrapper
   # Generates Rake tasks for working with Terraform.
-  #
-  # Before using this, the ``CONSUL_HOST`` environment variable must be set.
-  #
-  # __NOTE:__ Be sure to document all tasks in README.md
   class RakeTasks
     include Rake::DSL if defined? Rake::DSL
 
