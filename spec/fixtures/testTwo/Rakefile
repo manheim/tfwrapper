@@ -2,6 +2,10 @@
 
 require 'tfwrapper/raketasks'
 
+# we want to get real streaming output
+STDOUT.sync = true
+STDERR.sync = true
+
 TFWrapper::RakeTasks.install_tasks(
   'foo/bar',
   backend_config: {

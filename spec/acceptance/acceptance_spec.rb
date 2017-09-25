@@ -239,12 +239,22 @@ describe 'tfwrapper' do
       end
       it 'calls the before proc with the proper arguments before terraform' do
         expect(@out_err).to match(
-          /Executing tf:apply task with tfdir=foo\/bar.*terraform_runner command: 'terraform apply.*/
+          Regexp.new(
+            '.*Executing tf:apply task with tfdir=' \
+            "#{Regexp.escape(fixture_dir)}\/testTwo\/foo\/bar.*" \
+            'terraform_runner command: \'terraform apply.*',
+            Regexp::MULTILINE
+          )
         )
       end
       it 'calls the after proc with the proper arguments after terraform' do
         expect(@out_err).to match(
-          /terraform_runner command: 'terraform apply.*Executed tf:apply task with tfdir=foo\/bar/
+          Regexp.new(
+            '.*terraform_runner command: \'terraform apply.*Executed ' \
+            "tf:apply task with tfdir=#{Regexp.escape(fixture_dir)}" \
+            '\/testTwo\/foo\/bar.*',
+            Regexp::MULTILINE
+          )
         )
       end
       it 'writes the vars file' do
@@ -351,14 +361,17 @@ describe 'tfwrapper' do
         expect(@out_err).to include('foo_variable = fooval')
         expect(@out_err).to include('bar_variable = barval')
       end
-      it 'calls the before proc with the proper arguments before terraform' do
+      it 'calls the procs with the proper arguments in proper order' do
         expect(@out_err).to match(
-          /Executing tf:output task with tfdir=foo\/bar.*terraform_runner command: terraform output.*/
-        )
-      end
-      it 'calls the after proc with the proper arguments after terraform' do
-        expect(@out_err).to match(
-          /terraform_runner command: terraform output.*Executed tf:output task with tfdir=foo\/bar/
+          Regexp.new(
+            '.*Executing tf:output task with tfdir=' \
+            "#{Regexp.escape(fixture_dir)}\/testTwo\/foo\/bar\n" \
+            'bar_variable = barval' + "\n" \
+            'foo_variable = fooval' + "\n" \
+            'Executed tf:output task with tfdir=' \
+            "#{Regexp.escape(fixture_dir)}\/testTwo\/foo\/bar\n",
+            Regexp::MULTILINE
+          )
         )
       end
     end
@@ -493,12 +506,22 @@ describe 'tfwrapper' do
       end
       it 'calls the before proc with the proper arguments before terraform' do
         expect(@out_err).to match(
-          /Executing tf:apply task with tfdir=foo.*terraform_runner command:.*/
+          Regexp.new(
+            '.*Executing tf:apply task with tfdir=' \
+            "#{Regexp.escape(fixture_dir)}\/testThree\/foo.*" \
+            'terraform_runner command: \'terraform apply.*',
+            Regexp::MULTILINE
+          )
         )
       end
       it 'calls the after proc with the proper arguments after terraform' do
         expect(@out_err).to match(
-          /terraform_runner command:.*Executed tf:apply task with tfdir=foo/
+          Regexp.new(
+            '.*terraform_runner command: \'terraform apply.*Executed ' \
+            "tf:apply task with tfdir=#{Regexp.escape(fixture_dir)}" \
+            '\/testThree\/foo.*',
+            Regexp::MULTILINE
+          )
         )
       end
     end
@@ -583,12 +606,22 @@ describe 'tfwrapper' do
       end
       it 'calls the before proc with the proper arguments before terraform' do
         expect(@out_err).to match(
-          /Executing bar_tf:output task with tfdir=bar.*terraform_runner command: 'terraform apply.*/
+          Regexp.new(
+            '.*Executing bar_tf:apply task with tfdir=' \
+            "#{Regexp.escape(fixture_dir)}\/testThree\/bar.*" \
+            'terraform_runner command: \'terraform apply.*',
+            Regexp::MULTILINE
+          )
         )
       end
       it 'calls the after proc with the proper arguments after terraform' do
         expect(@out_err).to match(
-          /terraform_runner command: 'terraform apply.*Executed bar_tf:output task with tfdir=bar/
+          Regexp.new(
+            '.*terraform_runner command: \'terraform apply.*Executed ' \
+            "bar_tf:apply task with tfdir=#{Regexp.escape(fixture_dir)}" \
+            '\/testThree\/bar.*',
+            Regexp::MULTILINE
+          )
         )
       end
     end

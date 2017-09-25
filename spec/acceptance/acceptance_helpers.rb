@@ -4,10 +4,13 @@ require 'ffi'
 require 'faraday'
 require 'json'
 
-def cleanup_tf
-  fixture_dir = File.absolute_path(
+def fixture_dir
+  File.absolute_path(
     File.join(File.dirname(__FILE__), '..', 'fixtures')
   )
+end
+
+def cleanup_tf
   Dir.glob("#{fixture_dir}/**/.terraform").each do |d|
     FileUtils.rmtree(d) if File.directory?(d)
   end

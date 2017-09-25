@@ -2,12 +2,9 @@
 
 require 'tfwrapper/raketasks'
 
-# @option opts [String] :consul_url URL to access Consul at, for the
-#   ``:consul_env_vars_prefix`` option.
-# @option opts [String] :consul_env_vars_prefix if specified and not nil,
-#   write the environment variables used from ``tf_vars_from_env``
-#   and their values to JSON at this path in Consul. This should have
-#   the same naming constraints as ``consul_prefix``.
+# we want to get real streaming output
+STDOUT.sync = true
+STDERR.sync = true
 
 TFWrapper::RakeTasks.install_tasks(
   'foo',
