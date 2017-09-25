@@ -237,6 +237,16 @@ describe 'tfwrapper' do
           "Outputs:\n\nbar_variable = barval\nfoo_variable = fooval"
         )
       end
+      it 'calls the before proc with the proper arguments before terraform' do
+        expect(@out_err).to match(
+          /Executing tf:apply task with tfdir=foo\/bar.*terraform_runner command: 'terraform apply.*/
+        )
+      end
+      it 'calls the after proc with the proper arguments after terraform' do
+        expect(@out_err).to match(
+          /terraform_runner command: 'terraform apply.*Executed tf:apply task with tfdir=foo\/bar/
+        )
+      end
       it 'writes the vars file' do
         expect(File.file?(@varpath)).to be(true)
         c = File.open(@varpath, 'r').read
@@ -340,6 +350,16 @@ describe 'tfwrapper' do
       it 'shows the outputs' do
         expect(@out_err).to include('foo_variable = fooval')
         expect(@out_err).to include('bar_variable = barval')
+      end
+      it 'calls the before proc with the proper arguments before terraform' do
+        expect(@out_err).to match(
+          /Executing tf:output task with tfdir=foo\/bar.*terraform_runner command: terraform output.*/
+        )
+      end
+      it 'calls the after proc with the proper arguments after terraform' do
+        expect(@out_err).to match(
+          /terraform_runner command: terraform output.*Executed tf:output task with tfdir=foo\/bar/
+        )
       end
     end
   end
@@ -471,6 +491,16 @@ describe 'tfwrapper' do
           .to include('consul_keys.testThreeFoo')
         expect(state['modules'][0]['resources'].length).to eq(1)
       end
+      it 'calls the before proc with the proper arguments before terraform' do
+        expect(@out_err).to match(
+          /Executing tf:apply task with tfdir=foo.*terraform_runner command:.*/
+        )
+      end
+      it 'calls the after proc with the proper arguments after terraform' do
+        expect(@out_err).to match(
+          /terraform_runner command:.*Executed tf:apply task with tfdir=foo/
+        )
+      end
     end
     describe 'tf:output' do
       before(:all) do
@@ -550,6 +580,16 @@ describe 'tfwrapper' do
         expect(state['modules'][0]['resources'])
           .to include('consul_keys.testThreeBar')
         expect(state['modules'][0]['resources'].length).to eq(1)
+      end
+      it 'calls the before proc with the proper arguments before terraform' do
+        expect(@out_err).to match(
+          /Executing bar_tf:output task with tfdir=bar.*terraform_runner command: 'terraform apply.*/
+        )
+      end
+      it 'calls the after proc with the proper arguments after terraform' do
+        expect(@out_err).to match(
+          /terraform_runner command: 'terraform apply.*Executed bar_tf:output task with tfdir=bar/
+        )
       end
     end
     describe 'bar_tf:output' do
