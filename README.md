@@ -31,6 +31,8 @@ This Gem provides the following Rake tasks:
   ``bundle exec rake tf:destroy[aws_instance.foo[1],aws_instance.bar[2]]``; see the
   [destroy documentation](https://www.terraform.io/docs/commands/destroy.html) for more information.
 * __tf:write_tf_vars__ - used as a prerequisite for other tasks; write Terraform variables to file on disk
+* __tf:output__ - run ``terraform output``
+* __tf:output_json__ - run ``terraform output -json``
 
 ## Installation
 
