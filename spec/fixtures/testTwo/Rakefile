@@ -9,10 +9,10 @@ TFWrapper::RakeTasks.install_tasks(
   },
   tf_vars_from_env: { 'foo' => 'FOO' },
   tf_extra_vars: { 'bar' => 'barval' },
-  before_proc: Proc do |taskname, tfdir|
+  before_proc: Proc.new do |taskname, tfdir|
     puts "Executing #{taskname} task with tfdir=#{tfdir}"
   end,
-  after_proc: Proc do |taskname, tfdir|
+  after_proc: Proc.new do |taskname, tfdir|
     puts "Executed #{taskname} task with tfdir=#{tfdir}"
   end
 )

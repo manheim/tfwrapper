@@ -30,3 +30,8 @@ Style/MutableConstant:
 Style/MultilineMethodCallIndentation:
   Exclude:
     - 'spec/unit/raketasks_spec.rb'
+
+# Offense count: 28
+# Cop supports --auto-correct.
+Style/Proc:
+  Enabled: false

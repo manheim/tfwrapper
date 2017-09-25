@@ -79,8 +79,8 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to_not receive(:foo)
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       cls = TFWrapper::RakeTasks.new(
         'tf/dir',
         consul_env_vars_prefix: 'cvprefix',
@@ -342,7 +342,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:init', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
@@ -359,7 +359,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:init', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
@@ -427,7 +427,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:plan', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:plan'].invoke
@@ -440,7 +440,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:plan', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:plan'].invoke
@@ -474,7 +474,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:apply', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:apply'].invoke
@@ -488,7 +488,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:apply', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:apply'].invoke
@@ -623,7 +623,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:refresh', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:refresh'].invoke
@@ -636,7 +636,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:refresh', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:refresh'].invoke
@@ -698,7 +698,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:destroy', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:destroy'].invoke
@@ -711,7 +711,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:destroy', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:destroy'].invoke
@@ -777,7 +777,7 @@ describe TFWrapper::RakeTasks do
         allow(before_dbl).to receive(:foo)
         expect(before_dbl).to receive(:foo).once
           .with('tf:write_tf_vars', 'tfdir')
-        bproc = Proc { |a, b| before_dbl.foo(a, b) }
+        bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
         subject.instance_variable_set('@before_proc', bproc)
 
         Rake.application['tf:write_tf_vars'].invoke
@@ -798,7 +798,7 @@ describe TFWrapper::RakeTasks do
         allow(after_dbl).to receive(:foo)
         expect(after_dbl).to receive(:foo).once
           .with('tf:write_tf_vars', 'tfdir')
-        aproc = Proc { |a, b| after_dbl.foo(a, b) }
+        aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
         subject.instance_variable_set('@after_proc', aproc)
 
         Rake.application['tf:write_tf_vars'].invoke
@@ -865,7 +865,7 @@ describe TFWrapper::RakeTasks do
         allow(before_dbl).to receive(:foo)
         expect(before_dbl).to receive(:foo).once
           .with('foo_tf:write_tf_vars', 'tfdir')
-        bproc = Proc { |a, b| before_dbl.foo(a, b) }
+        bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
         subject.instance_variable_set('@before_proc', bproc)
 
         Rake.application['foo_tf:write_tf_vars'].invoke
@@ -887,7 +887,7 @@ describe TFWrapper::RakeTasks do
         allow(after_dbl).to receive(:foo)
         expect(after_dbl).to receive(:foo).once
           .with('foo_tf:write_tf_vars', 'tfdir')
-        aproc = Proc { |a, b| after_dbl.foo(a, b) }
+        aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
         subject.instance_variable_set('@after_proc', aproc)
 
         Rake.application['foo_tf:write_tf_vars'].invoke
@@ -929,7 +929,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:output', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:output'].invoke
@@ -942,7 +942,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:output', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:output'].invoke
@@ -968,7 +968,7 @@ describe TFWrapper::RakeTasks do
       before_dbl = double
       allow(before_dbl).to receive(:foo)
       expect(before_dbl).to receive(:foo).once.with('tf:output_json', 'tfdir')
-      bproc = Proc { |a, b| before_dbl.foo(a, b) }
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
       subject.instance_variable_set('@before_proc', bproc)
 
       Rake.application['tf:output_json'].invoke
@@ -981,7 +981,7 @@ describe TFWrapper::RakeTasks do
       after_dbl = double
       allow(after_dbl).to receive(:foo)
       expect(after_dbl).to receive(:foo).once.with('tf:output_json', 'tfdir')
-      aproc = Proc { |a, b| after_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       subject.instance_variable_set('@after_proc', aproc)
 
       Rake.application['tf:output_json'].invoke
