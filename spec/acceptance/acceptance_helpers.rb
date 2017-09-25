@@ -73,7 +73,6 @@ class HashicorpFetcher
     true
   end
 
-  # rubocop:disable Metrics/AbcSize
   def fetch
     return File.realpath(bin_path) unless vendored_required?
     require 'open-uri'
@@ -102,7 +101,6 @@ class HashicorpFetcher
     raise StandardErrro, 'Error: wrong version' unless is_correct_version?
     File.realpath(bin_path)
   end
-  # rubocop:enable Metrics/AbcSize
 
   def is_correct_version?
     ver = `#{bin_path} version`.strip

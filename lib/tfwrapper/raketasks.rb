@@ -19,7 +19,8 @@ module TFWrapper
       # set when installed
       attr_accessor :instance
 
-      # Install the Rake tasks for working with Terraform at Manheim.
+      # Install the Rake tasks for working with Terraform. For full parameter
+      # documentation, see {TFWrapper::RakeTasks#initialize}
       #
       # @param (see #initialize)
       def install_tasks(tf_dir, opts = {})
@@ -38,7 +39,6 @@ module TFWrapper
     # @param tf_dir [String] Terraform config directory, relative to Rakefile.
     #   Set to '.' if the Rakefile is in the same directory as the ``.tf``
     #   configuration files.
-    # @param [Hash] options to use when adding tasks
     # @option opts [Hash] :backend_config hash of Terraform remote state
     #   backend configuration options, to override or supplement those in
     #   the terraform configuration. See the
@@ -58,6 +58,15 @@ module TFWrapper
     #   write the environment variables used from ``tf_vars_from_env``
     #   and their values to JSON at this path in Consul. This should have
     #   the same naming constraints as ``consul_prefix``.
+    # @option opts [Proc] :before_proc Proc instance to call before executing
+    #   the body of each task. Called with two arguments, the String full
+    #   (namespaced) name of the task being executed, and ``tf_dir``. Returning
+    #   or breaking from this Proc will cause the task to not execute; to exit
+    #   the Proc early, use ``next``.
+    # @option opts [Proc] :after_proc Proc instance to call after executing
+    #   the body of each task. Called with two arguments, the String full
+    #   (namespaced) name of the task being executed, and ``tf_dir``. This will
+    #   not execute if the body of the task fails.
     def initialize(tf_dir, opts = {})
       # find the directory that contains the Rakefile
       rakedir = File.realpath(Rake.application.rakefile)
@@ -69,6 +78,22 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
+      @before_proc = opts.fetch(:before_proc, nil)
+      if !@before_proc.nil? && !@before_proc.is_a?(Proc)
+        raise(
+          TypeError,
+          'TFWrapper::RakeTasks.initialize option :before_proc must be a ' \
+          'Proc instance, not a ' + @before_proc.class.name
+        )
+      end
+      @after_proc = opts.fetch(:after_proc, nil)
+      if !@after_proc.nil? && !@after_proc.is_a?(Proc)
+        raise(
+          TypeError,
+          'TFWrapper::RakeTasks.initialize option :after_proc must be a Proc ' \
+          'instance, not a ' + @after_proc.class.name
+        )
+      end
       # default to lowest possible version; this is set in the 'init' task
       @tf_version = Gem::Version.new('0.0.0')
       # rubocop:disable Style/GuardClause
@@ -105,7 +130,8 @@ module TFWrapper
     def install_init
       namespace nsprefix do
         desc 'Run terraform init with appropriate arguments'
-        task :init do
+        task :init do |t|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
           @tf_version = check_tf_version
           cmd = [
@@ -117,6 +143,7 @@ module TFWrapper
             cmd = cmd + ' ' + "-backend-config='#{k}=#{v}'"
           end
           terraform_runner(cmd)
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -129,7 +156,8 @@ module TFWrapper
         task :plan, [:target] => [
           :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
-        ] do |_t, args|
+        ] do |t, args|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           cmd = cmd_with_targets(
             ['terraform', 'plan', "-var-file #{var_file_path}"],
             args[:target],
@@ -137,6 +165,7 @@ module TFWrapper
           )
 
           terraform_runner(cmd)
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -150,7 +179,8 @@ module TFWrapper
           :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars",
           :"#{nsprefix}:plan"
-        ] do |_t, args|
+        ] do |t, args|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           cmd_arr = %w[terraform apply]
           cmd_arr << '-auto-approve' if tf_version >= Gem::Version.new('0.10.0')
           cmd_arr << "-var-file #{var_file_path}"
@@ -162,6 +192,7 @@ module TFWrapper
           terraform_runner(cmd)
 
           update_consul_stack_env_vars unless @consul_env_vars_prefix.nil?
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -172,7 +203,8 @@ module TFWrapper
         task refresh: [
           :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
-        ] do
+        ] do |t|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           cmd = [
             'terraform',
             'refresh',
@@ -180,6 +212,7 @@ module TFWrapper
           ].join(' ')
 
           terraform_runner(cmd)
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -190,14 +223,18 @@ module TFWrapper
         task output: [
           :"#{nsprefix}:init",
           :"#{nsprefix}:refresh"
-        ] do
+        ] do |t|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           terraform_runner('terraform output')
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
         task output_json: [
           :"#{nsprefix}:init",
           :"#{nsprefix}:refresh"
-        ] do
+        ] do |t|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           terraform_runner('terraform output -json')
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -210,7 +247,8 @@ module TFWrapper
         task :destroy, [:target] => [
           :"#{nsprefix}:init",
           :"#{nsprefix}:write_tf_vars"
-        ] do |_t, args|
+        ] do |t, args|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           cmd = cmd_with_targets(
             ['terraform', 'destroy', '-force', "-var-file #{var_file_path}"],
             args[:target],
@@ -218,6 +256,7 @@ module TFWrapper
           )
 
           terraform_runner(cmd)
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end
@@ -234,7 +273,8 @@ module TFWrapper
     def install_write_tf_vars
       namespace nsprefix do
         desc "Write #{var_file_path}"
-        task :write_tf_vars do
+        task :write_tf_vars do |t|
+          @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
           tf_vars = terraform_vars
           puts 'Terraform vars:'
           tf_vars.sort.map do |k, v|
@@ -248,6 +288,7 @@ module TFWrapper
             f.write(tf_vars.to_json)
           end
           STDERR.puts "Terraform vars written to: #{var_file_path}"
+          @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
     end

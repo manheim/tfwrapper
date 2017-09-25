@@ -1,14 +1,20 @@
 Metrics/AbcSize:
-  Max: 22
+  Max: 40
 
 Metrics/BlockLength:
-  Max: 1000
+  Max: 1300
 
 Metrics/ClassLength:
   Max: 500
 
 Metrics/MethodLength:
   Max: 100
+
+Metrics/PerceivedComplexity:
+  Max: 8
+
+Metrics/CyclomaticComplexity:
+  Max: 8
 
 # These are to compensate for some warnings that differ by
 # rubocop/ruby version
@@ -21,6 +27,6 @@ Style/MutableConstant:
     - 'lib/tfwrapper/version.rb'
     - 'spec/acceptance/acceptance_spec.rb'
 
-Layout/MultilineMethodCallIndentation:
+Style/MultilineMethodCallIndentation:
   Exclude:
     - 'spec/unit/raketasks_spec.rb'
