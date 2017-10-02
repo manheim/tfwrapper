@@ -1,3 +1,8 @@
+Version 0.4.0
+
+  - Add support for calling Procs at the beginning and end of each task.
+  - Documentation cleanup.
+
 Version 0.3.0
 
   - Add `tf:output` and `tf:output_json` Rake tasks

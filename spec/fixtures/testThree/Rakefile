@@ -2,25 +2,34 @@
 
 require 'tfwrapper/raketasks'
 
-# @option opts [String] :consul_url URL to access Consul at, for the
-#   ``:consul_env_vars_prefix`` option.
-# @option opts [String] :consul_env_vars_prefix if specified and not nil,
-#   write the environment variables used from ``tf_vars_from_env``
-#   and their values to JSON at this path in Consul. This should have
-#   the same naming constraints as ``consul_prefix``.
+# we want to get real streaming output
+STDOUT.sync = true
+STDERR.sync = true
 
 TFWrapper::RakeTasks.install_tasks(
   'foo',
   backend_config: { 'path' => 'terraform/testThreeFoo' },
   tf_vars_from_env: { 'foo' => 'FOO' },
-  tf_extra_vars: { 'bar' => 'barONEval' }
+  tf_extra_vars: { 'bar' => 'barONEval' },
+  before_proc: Proc.new do |taskname, tfdir|
+    puts "Executing #{taskname} task with tfdir=#{tfdir}"
+  end,
+  after_proc: Proc.new do |taskname, tfdir|
+    puts "Executed #{taskname} task with tfdir=#{tfdir}"
+  end
 )
 
 TFWrapper::RakeTasks.install_tasks(
   'bar',
   namespace_prefix: 'bar',
   tf_vars_from_env: { 'foo' => 'FOO' },
-  tf_extra_vars: { 'bar' => 'barTWOval' }
+  tf_extra_vars: { 'bar' => 'barTWOval' },
+  before_proc: Proc.new do |taskname, tfdir|
+    puts "Executing #{taskname} task with tfdir=#{tfdir}"
+  end,
+  after_proc: Proc.new do |taskname, tfdir|
+    puts "Executed #{taskname} task with tfdir=#{tfdir}"
+  end
 )
 
 TFWrapper::RakeTasks.install_tasks(
@@ -28,5 +37,11 @@ TFWrapper::RakeTasks.install_tasks(
   namespace_prefix: 'baz',
   tf_vars_from_env: { 'foo' => 'FOO' },
   consul_url: 'http://127.0.0.1:8500',
-  consul_env_vars_prefix: 'vars/testThreeBaz'
+  consul_env_vars_prefix: 'vars/testThreeBaz',
+  before_proc: Proc.new do |taskname, tfdir|
+    puts "Executing #{taskname} task with tfdir=#{tfdir}"
+  end,
+  after_proc: Proc.new do |taskname, tfdir|
+    puts "Executed #{taskname} task with tfdir=#{tfdir}"
+  end
 )

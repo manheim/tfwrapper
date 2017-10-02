@@ -31,6 +31,8 @@ This Gem provides the following Rake tasks:
   ``bundle exec rake tf:destroy[aws_instance.foo[1],aws_instance.bar[2]]``; see the
   [destroy documentation](https://www.terraform.io/docs/commands/destroy.html) for more information.
 * __tf:write_tf_vars__ - used as a prerequisite for other tasks; write Terraform variables to file on disk
+* __tf:output__ - run ``terraform output``
+* __tf:output_json__ - run ``terraform output -json``
 
 ## Installation
 
@@ -233,6 +235,33 @@ TFWrapper::RakeTasks.install_tasks(
   '.',
   tf_vars_from_env: {'environment' => 'ENVIRONMENT'},
   backend_config: {'path' => "terraform/foo/#{ENVIRONMENT}"}
+)
+```
+
+### Calling Procs At Beginning and End of Tasks
+
+Version 0.4.0 of tfwrapper introduced the ability to call arbitrary Ruby Procs from within the Rake tasks,
+at the beginning and end of the task (i.e. before and after the terraform-handling code within the task).
+This is accomplished via the ``:before_proc`` and ``:after_proc`` options, each taking a Proc instance.
+
+The Procs take two positional arguments; a ``String`` containing the full, namespaced name of the Rake task
+it was called from, and the ``String`` ``tf_dir`` argument passed to the TFWrapper::RakeTasks class (exactly as specified).
+
+This could be used for things such as showing the output of state after a terraform run,
+triggering a [tfenv](https://github.com/kamatama41/tfenv) installation, etc.
+
+```ruby
+require 'tfwrapper/raketasks'
+
+TFWrapper::RakeTasks.install_tasks(
+  '.',
+  before_proc: Proc.new do |taskname, tfdir|
+    next unless taskname == 'tf:apply' # example of only executing for apply task in default namespace
+    puts "Executing #{taskname} task with tfdir=#{tfdir}"
+  end,
+  after_proc: Proc.new do |taskname, tfdir|
+    puts "Executed #{taskname} task with tfdir=#{tfdir}"
+  end
 )
 ```
 

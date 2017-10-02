@@ -12,6 +12,8 @@ require 'rubygems'
 describe TFWrapper::RakeTasks do
   subject do
     allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+    allow(Rake.application).to receive(:original_dir)
+      .and_return('/path/to/rakedir')
     allow(File).to receive(:realpath) { |p| p }
     subj = TFWrapper::RakeTasks.new('tfdir')
     subj.instance_variable_set('@tf_dir', 'tfdir')
@@ -62,6 +64,8 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
       expect(cls.instance_variable_get('@tf_version'))
         .to eq(Gem::Version.new('0.0.0'))
+      expect(cls.instance_variable_get('@before_proc')).to eq(nil)
+      expect(cls.instance_variable_get('@after_proc')).to eq(nil)
     end
     it 'sets options' do
       allow(ENV).to receive(:[])
@@ -69,12 +73,22 @@ describe TFWrapper::RakeTasks do
       allow(Rake.application).to receive(:rakefile)
         .and_return('/path/to')
       allow(File).to receive(:realpath) { |p| p.sub('../', '') }
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to_not receive(:foo)
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to_not receive(:foo)
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
       cls = TFWrapper::RakeTasks.new(
         'tf/dir',
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
         tf_extra_vars: { 'baz' => 'blam' },
-        consul_url: 'foobar'
+        consul_url: 'foobar',
+        before_proc: bproc,
+        after_proc: aproc
       )
       expect(cls.instance_variable_get('@tf_dir'))
         .to eq('/path/to/tf/dir')
@@ -86,6 +100,38 @@ describe TFWrapper::RakeTasks do
         .to eq('baz' => 'blam')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq('foobar')
+      expect(cls.instance_variable_get('@before_proc')).to eq(bproc)
+      expect(cls.instance_variable_get('@after_proc')).to eq(aproc)
+    end
+    context 'when before_proc is not a proc or nil' do
+      it 'raises an error' do
+        allow(ENV).to receive(:[])
+        allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
+        allow(ENV).to receive(:[]).with('ENVIRONMENT').and_return('myenv')
+        allow(ENV).to receive(:[]).with('PROJECT').and_return('myproj')
+        allow(Rake.application).to receive(:rakefile)
+          .and_return('/rake/dir/Rakefile')
+        allow(File).to receive(:realpath) { |p| p.sub('../', '') }
+        allow(File).to receive(:file?).and_return(true)
+        expect { TFWrapper::RakeTasks.new('tfdir', before_proc: 'foo') }
+          .to raise_error(
+            TypeError,
+            /before_proc must be a Proc instance, not a String/
+          )
+      end
+    end
+    context 'when after_proc is not a proc or nil' do
+      it 'raises an error' do
+        allow(Rake.application).to receive(:original_dir)
+          .and_return('/rake/dir')
+        allow(Rake.application).to receive(:rakefile).and_return('Rakefile')
+        allow(File).to receive(:realpath) { |p| p }
+        expect { TFWrapper::RakeTasks.new('tfdir', after_proc: 'foo') }
+          .to raise_error(
+            TypeError,
+            /after_proc must be a Proc instance, not a String/
+          )
+      end
     end
     context 'when consul_url is nil but consul_env_vars_prefix is not' do
       it 'raises an error' do
@@ -290,6 +336,40 @@ describe TFWrapper::RakeTasks do
       expect(subject.instance_variable_get(:@tf_version))
         .to eq(Gem::Version.new('0.10.2'))
     end
+    it 'calls before_proc if not nil' do
+      Rake.application['tf:init'].clear_prerequisites
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:init', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      allow(TFWrapper::Helpers).to receive(:check_env_vars)
+      allow(ENV).to receive(:[])
+      subject.instance_variable_set('@backend_config', {})
+      allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.10.2'))
+      Rake.application['tf:init'].invoke
+    end
+    it 'calls after_proc if not nil' do
+      Rake.application['tf:init'].clear_prerequisites
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:init', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      allow(TFWrapper::Helpers).to receive(:check_env_vars)
+      allow(ENV).to receive(:[])
+      subject.instance_variable_set('@backend_config', {})
+      allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:check_tf_version)
+        .and_return(Gem::Version.new('0.10.2'))
+      Rake.application['tf:init'].invoke
+    end
   end
   describe '#install_plan' do
     # these let/before/after come from bundler's gem_helper_spec.rb
@@ -339,6 +419,32 @@ describe TFWrapper::RakeTasks do
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
     end
+    it 'calls before_proc if not nil' do
+      Rake.application['tf:plan'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:plan', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:plan'].invoke
+    end
+    it 'calls after_proc if not nil' do
+      Rake.application['tf:plan'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:plan', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      Rake.application['tf:plan'].invoke
+    end
   end
   describe '#install_apply' do
     # these let/before/after come from bundler's gem_helper_spec.rb
@@ -358,6 +464,34 @@ describe TFWrapper::RakeTasks do
       expect(Rake.application['tf:apply'].prerequisites)
         .to eq(%w[tf:init tf:write_tf_vars tf:plan])
       expect(Rake.application['tf:apply'].arg_names).to eq([:target])
+    end
+    it 'calls before_proc if not nil' do
+      Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:update_consul_stack_env_vars)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:apply', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:apply'].invoke
+    end
+    it 'calls after_proc if not nil' do
+      Rake.application['tf:apply'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+      allow(subject).to receive(:update_consul_stack_env_vars)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:apply', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      Rake.application['tf:apply'].invoke
     end
     context 'terraform version 0.9.5' do
       before(:each) do
@@ -481,6 +615,32 @@ describe TFWrapper::RakeTasks do
         .with('terraform refresh -var-file file.tfvars.json')
       Rake.application['tf:refresh'].invoke
     end
+    it 'calls before_proc if not nil' do
+      Rake.application['tf:refresh'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:refresh', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:refresh'].invoke
+    end
+    it 'calls after_proc if not nil' do
+      Rake.application['tf:refresh'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:refresh', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      Rake.application['tf:refresh'].invoke
+    end
   end
   describe '#install_destroy' do
     # these let/before/after come from bundler's gem_helper_spec.rb
@@ -530,6 +690,32 @@ describe TFWrapper::RakeTasks do
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
     end
+    it 'calls before_proc if not nil' do
+      Rake.application['tf:destroy'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:destroy', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:destroy'].invoke
+    end
+    it 'calls after_proc if not nil' do
+      Rake.application['tf:destroy'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:destroy', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      Rake.application['tf:destroy'].invoke
+    end
   end
   describe '#install_write_tf_vars' do
     # these let/before/after come from bundler's gem_helper_spec.rb
@@ -573,6 +759,48 @@ describe TFWrapper::RakeTasks do
         expect(f_dbl).to receive(:write).once.with(vars.to_json)
         expect(STDERR).to receive(:puts)
           .once.with('Terraform vars written to: file.tfvars.json')
+        Rake.application['tf:write_tf_vars'].invoke
+      end
+      it 'calls before_proc if not nil' do
+        vars = {
+          'foo' => 'bar',
+          'baz' => 'blam',
+          'aws_access_key' => 'ak'
+        }
+        allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        f_dbl = double(File)
+        allow(File).to receive(:open).and_yield(f_dbl)
+        allow(f_dbl).to receive(:write)
+
+        before_dbl = double
+        allow(before_dbl).to receive(:foo)
+        expect(before_dbl).to receive(:foo).once
+          .with('tf:write_tf_vars', 'tfdir')
+        bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+        subject.instance_variable_set('@before_proc', bproc)
+
+        Rake.application['tf:write_tf_vars'].invoke
+      end
+      it 'calls after_proc if not nil' do
+        vars = {
+          'foo' => 'bar',
+          'baz' => 'blam',
+          'aws_access_key' => 'ak'
+        }
+        allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+        f_dbl = double(File)
+        allow(File).to receive(:open).and_yield(f_dbl)
+        allow(f_dbl).to receive(:write)
+
+        after_dbl = double
+        allow(after_dbl).to receive(:foo)
+        expect(after_dbl).to receive(:foo).once
+          .with('tf:write_tf_vars', 'tfdir')
+        aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+        subject.instance_variable_set('@after_proc', aproc)
+
         Rake.application['tf:write_tf_vars'].invoke
       end
     end
@@ -620,6 +848,50 @@ describe TFWrapper::RakeTasks do
           .once.with('Terraform vars written to: foo_file.tfvars.json')
         Rake.application['foo_tf:write_tf_vars'].invoke
       end
+      it 'calls before_proc if not nil' do
+        vars = {
+          'foo' => 'bar',
+          'baz' => 'blam',
+          'aws_access_key' => 'ak'
+        }
+        allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path)
+          .and_return('foo_file.tfvars.json')
+        f_dbl = double(File)
+        allow(File).to receive(:open).and_yield(f_dbl)
+        allow(f_dbl).to receive(:write)
+
+        before_dbl = double
+        allow(before_dbl).to receive(:foo)
+        expect(before_dbl).to receive(:foo).once
+          .with('foo_tf:write_tf_vars', 'tfdir')
+        bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+        subject.instance_variable_set('@before_proc', bproc)
+
+        Rake.application['foo_tf:write_tf_vars'].invoke
+      end
+      it 'calls after_proc if not nil' do
+        vars = {
+          'foo' => 'bar',
+          'baz' => 'blam',
+          'aws_access_key' => 'ak'
+        }
+        allow(subject).to receive(:terraform_vars).and_return(vars)
+        allow(subject).to receive(:var_file_path)
+          .and_return('foo_file.tfvars.json')
+        f_dbl = double(File)
+        allow(File).to receive(:open).and_yield(f_dbl)
+        allow(f_dbl).to receive(:write)
+
+        after_dbl = double
+        allow(after_dbl).to receive(:foo)
+        expect(after_dbl).to receive(:foo).once
+          .with('foo_tf:write_tf_vars', 'tfdir')
+        aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+        subject.instance_variable_set('@after_proc', aproc)
+
+        Rake.application['foo_tf:write_tf_vars'].invoke
+      end
     end
   end
   describe '#install_output' do
@@ -649,6 +921,32 @@ describe TFWrapper::RakeTasks do
         .with('terraform output')
       Rake.application['tf:output'].invoke
     end
+    it 'output calls before_proc if not nil' do
+      Rake.application['tf:output'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:output', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:output'].invoke
+    end
+    it 'output calls after_proc if not nil' do
+      Rake.application['tf:output'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:output', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
+      Rake.application['tf:output'].invoke
+    end
     it 'adds the output_json task' do
       expect(Rake.application['tf:output_json']).to be_instance_of(Rake::Task)
       expect(Rake.application['tf:output_json'].prerequisites)
@@ -660,6 +958,32 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform output -json')
+      Rake.application['tf:output_json'].invoke
+    end
+    it 'output_json calls before_proc if not nil' do
+      Rake.application['tf:output_json'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      before_dbl = double
+      allow(before_dbl).to receive(:foo)
+      expect(before_dbl).to receive(:foo).once.with('tf:output_json', 'tfdir')
+      bproc = Proc.new { |a, b| before_dbl.foo(a, b) }
+      subject.instance_variable_set('@before_proc', bproc)
+
+      Rake.application['tf:output_json'].invoke
+    end
+    it 'output_json calls after_proc if not nil' do
+      Rake.application['tf:output_json'].clear_prerequisites
+      allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
+      allow(subject).to receive(:terraform_runner)
+
+      after_dbl = double
+      allow(after_dbl).to receive(:foo)
+      expect(after_dbl).to receive(:foo).once.with('tf:output_json', 'tfdir')
+      aproc = Proc.new { |a, b| after_dbl.foo(a, b) }
+      subject.instance_variable_set('@after_proc', aproc)
+
       Rake.application['tf:output_json'].invoke
     end
   end

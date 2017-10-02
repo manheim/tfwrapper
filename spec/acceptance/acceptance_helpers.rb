@@ -4,10 +4,13 @@ require 'ffi'
 require 'faraday'
 require 'json'
 
-def cleanup_tf
-  fixture_dir = File.absolute_path(
+def fixture_dir
+  File.absolute_path(
     File.join(File.dirname(__FILE__), '..', 'fixtures')
   )
+end
+
+def cleanup_tf
   Dir.glob("#{fixture_dir}/**/.terraform").each do |d|
     FileUtils.rmtree(d) if File.directory?(d)
   end
@@ -73,7 +76,6 @@ class HashicorpFetcher
     true
   end
 
-  # rubocop:disable Metrics/AbcSize
   def fetch
     return File.realpath(bin_path) unless vendored_required?
     require 'open-uri'
@@ -102,7 +104,6 @@ class HashicorpFetcher
     raise StandardErrro, 'Error: wrong version' unless is_correct_version?
     File.realpath(bin_path)
   end
-  # rubocop:enable Metrics/AbcSize
 
   def is_correct_version?
     ver = `#{bin_path} version`.strip
