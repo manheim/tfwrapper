@@ -1,6 +1,7 @@
 Version 0.4.1
 
   - Upgrade rubocop and yard development dependency versions
+  - Pin `cri` development dependency to 2.9 to retain ruby 2.0 support
 
 Version 0.4.0
 
