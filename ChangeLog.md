@@ -1,3 +1,7 @@
+Version 0.4.1
+
+  - Upgrade rubocop and yard development dependency versions
+
 Version 0.4.0
 
   - Add support for calling Procs at the beginning and end of each task.
