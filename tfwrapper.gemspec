@@ -28,8 +28,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rb-readline', '~> 0.5'
 
   gem.add_development_dependency 'bundler'
-  gem.add_development_dependency 'cri', '~> 2'
-  gem.add_development_dependency 'diplomat', '~> 0.15'
+  gem.add_development_dependency 'cri', '~> 2.9.1'
+  gem.add_development_dependency 'diplomat', '~> 2.0.2'
   gem.add_development_dependency 'faraday', '~> 0.9'
   gem.add_development_dependency 'ffi', '>= 1.9.9'
   gem.add_development_dependency 'git', '~> 1.2', '>= 1.2.9.1'
@@ -42,10 +42,10 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rake', '~> 10'
   gem.add_development_dependency 'rspec', '~> 3'
   gem.add_development_dependency 'rspec_junit_formatter', '~> 0.2'
-  gem.add_development_dependency 'rubocop', '~> 0.37'
+  gem.add_development_dependency 'rubocop', '~> 0.49.1'
   gem.add_development_dependency 'simplecov', '~> 0.11'
   gem.add_development_dependency 'simplecov-console'
-  gem.add_development_dependency 'yard', '~> 0.8'
+  gem.add_development_dependency 'yard', '~> 0.9.11'
 
   # this requires rubygems >= 2.2.0
   gem.metadata['allowed_push_host'] = 'https://rubygems.org'

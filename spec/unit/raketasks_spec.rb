@@ -1202,17 +1202,12 @@ describe TFWrapper::RakeTasks do
         subject.instance_variable_set('@tf_vars_from_env', vars)
         subject.instance_variable_set('@consul_url', 'foo://bar')
         subject.instance_variable_set('@consul_env_vars_prefix', 'my/prefix')
-        dbl_config = double
-        allow(dbl_config).to receive(:url=)
-        allow(Diplomat).to receive(:configure).and_yield(dbl_config)
         allow(ENV).to receive(:[])
         allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
         allow(ENV).to receive(:[]).with('bar').and_return('barVal')
         allow(ENV).to receive(:[]).with('blam').and_return('blamVal')
         allow(Diplomat::Kv).to receive(:put)
 
-        expect(Diplomat).to receive(:configure).once
-        expect(dbl_config).to receive(:url=).once.with('foo://bar')
         expect(STDOUT).to receive(:puts).once
           .with('Writing stack information to foo://bar at: my/prefix')
         expect(STDOUT).to receive(:puts).once
@@ -1220,6 +1215,7 @@ describe TFWrapper::RakeTasks do
         expect(Diplomat::Kv).to receive(:put)
           .once.with('my/prefix', JSON.generate(expected))
         subject.update_consul_stack_env_vars
+        expect(Diplomat.configuration.url).to eq('foo://bar')
       end
     end
   end

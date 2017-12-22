@@ -7,8 +7,12 @@ require 'json'
 
 TF_VERSION = desired_tf_version
 if Gem::Version.new(TF_VERSION) >= Gem::Version.new('0.10.0')
-  EXPECTED_SERIAL = 2
   APPLY_CMD = 'terraform apply -auto-approve'
+  EXPECTED_SERIAL = if Gem::Version.new(TF_VERSION) < Gem::Version.new('0.11.0')
+                      2
+                    else
+                      1
+                    end
 else
   EXPECTED_SERIAL = 1
   APPLY_CMD = 'terraform apply'

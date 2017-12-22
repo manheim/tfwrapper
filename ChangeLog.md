@@ -1,3 +1,8 @@
+Version 0.4.1
+
+  - Upgrade rubocop, yard and diplomat development dependency versions
+  - Pin `cri` development dependency to 2.9 to retain ruby 2.0 support
+
 Version 0.4.0
 
   - Add support for calling Procs at the beginning and end of each task.
