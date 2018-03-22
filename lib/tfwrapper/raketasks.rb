@@ -10,7 +10,7 @@ require 'tfwrapper/version'
 begin
   require 'terraform_landscape'
   HAVE_LANDSCAPE = true
-rescue
+rescue LoadError
   HAVE_LANDSCAPE = false
 end
 # :nocov:
