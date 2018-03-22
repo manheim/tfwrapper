@@ -416,6 +416,7 @@ describe TFWrapper::RakeTasks do
       expect(Rake.application['tf:plan'].arg_names).to eq([:target])
     end
     it 'runs the plan command with no targets' do
+      stub_const('TFWrapper::RakeTasks::HAVE_LANDSCAPE', true)
       Rake.application['tf:plan'].clear_prerequisites
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
@@ -424,6 +425,7 @@ describe TFWrapper::RakeTasks do
       Rake.application['tf:plan'].invoke
     end
     it 'runs the plan command with one target' do
+      stub_const('TFWrapper::RakeTasks::HAVE_LANDSCAPE', true)
       Rake.application['tf:plan'].clear_prerequisites
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
@@ -433,6 +435,7 @@ describe TFWrapper::RakeTasks do
       Rake.application['tf:plan'].invoke('tar.get[1]')
     end
     it 'runs the plan command with three targets' do
+      stub_const('TFWrapper::RakeTasks::HAVE_LANDSCAPE', true)
       Rake.application['tf:plan'].clear_prerequisites
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
@@ -1098,7 +1101,7 @@ describe TFWrapper::RakeTasks do
       )
     end
   end
-  describe '#landscape_format' do
+  describe '#landscape_format', :if => HAVE_LANDSCAPE do
     before(:each) do
       allow(STDERR).to receive(:puts)
       allow(STDOUT).to receive(:puts)
@@ -1160,7 +1163,7 @@ describe TFWrapper::RakeTasks do
             .to receive(:new).and_return(dbl_output)
           allow(dbl_printer).to receive(:process_string)
             .and_raise(RuntimeError, "FooError")
-          
+
           expect(TerraformLandscape::Output)
             .to receive(:new).once.with(STDOUT)
           expect(TerraformLandscape::Printer)

@@ -4,6 +4,13 @@ require 'simplecov'
 require 'simplecov-console'
 require 'rspec_junit_formatter'
 
+begin
+  require 'terraform_landscape'
+  HAVE_LANDSCAPE = true
+rescue LoadError
+  HAVE_LANDSCAPE = false
+end
+
 ENV['CONSUL_ADDR'] ||= '127.0.0.1:8500'
 ENV['CONSUL_URL']  ||= "http://#{ENV['CONSUL_ADDR']}"
 
