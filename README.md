@@ -18,7 +18,9 @@ This Gem provides the following Rake tasks:
   one or more optional [resource address](https://www.terraform.io/docs/internals/resource-addressing.html) targets to pass to
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:plan[aws_instance.foo[1]]`` or
   ``bundle exec rake tf:plan[aws_instance.foo[1],aws_instance.bar[2]]``; see the
-  [plan documentation](https://www.terraform.io/docs/commands/plan.html) for more information.
+  [plan documentation](https://www.terraform.io/docs/commands/plan.html) for more information. By default this will use
+  [terraform_landscape](https://github.com/coinbase/terraform-landscape/blob/master/README.md) for formatting the plan
+  output if the ``terraform_landscape`` gem is installed; see the [section below](#terraform-landscape) for more information.
 * __tf:apply__ - run ``terraform apply`` with all variables and configuration, and TF variables written to disk. You can specify
   one or more optional [resource address](https://www.terraform.io/docs/internals/resource-addressing.html) targets to pass to
   terraform with the ``-target`` flag as Rake task arguments, i.e. ``bundle exec rake tf:apply[aws_instance.foo[1]]`` or
@@ -48,6 +50,23 @@ gem 'tfwrapper', '~> 0.2.0'
 ### Supported Terraform Versions
 
 tfwrapper only supports terraform 0.9+. It is tested against multiple versions from 0.9.2 to 0.10.2 and the current release.
+
+### Terraform Landscape
+
+The [terraform_landscape](https://github.com/coinbase/terraform-landscape/blob/master/README.md) gem provides enhanced formatting of ``terraform plan`` output including colorization of changes and human-friendly diffs (i.e. diffs of JSON rendered with pretty-printing). By default ``plan`` output will be passed through terraform_landscape if the ``terraform_landscape`` gem is available. To enable this, add ``gem 'terraform_landscape', '~> 0.1.17'`` to your ``Gemfile``. __Note__ that we rely on an undocumented internal API of terraform_landscape to achieve this; the formatting code will fall back to unformatted output in case of an error.
+
+If you wish to disable terraform_landscape output even when the gem is installed, pass ``disable_landscape: true`` as an option to ``install_tasks()``:
+
+```ruby
+TFWrapper::RakeTasks.install_tasks('.', disable_landscape: true)
+```
+
+In previous versions or when terraform_landscape is not installed, the output of all terraform commands is streamed in realtime. Since terraform_landscape requires the full and complete ``plan`` output in order to reformat it, this is no longer the case. By default when terraform_landscape is installed and not disabled the ``plan`` task will not produce any output until complete, at which point it will print the landscape-formatted output all at once. This behavior can be controlled with the ``:landscape_progress`` option of ``install_tasks()``, which takes one of the following values:
+
+* ``nil``, the default, to not produce any output until the command is complete at which point the landscape-formatted output will be shown.
+* ``:dots`` to print a dot to STDOUT for every line of ``terraform plan`` output and then print the landscape-formatted output when complete.
+* ``:lines`` to print a dot followed by a newline to STDOUT for every line of ``terraform plan`` output and then print the landscape-formatted output when complete. This is useful for systems like Jenkins that line-buffer output (and don't display anything until a newline is encountered).
+* ``:stream`` to stream the ``terraform plan`` output in realtime (as was the previous behavior) and then print the landscape-formatted output when complete. Note that this will result in the output containing the complete unformatted ``terraform plan`` output, followed by the landscape-formatted output.
 
 ## Usage
 

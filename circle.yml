@@ -5,11 +5,11 @@ dependencies:
   pre:
     - sudo add-apt-repository -y ppa:git-core/ppa && sudo apt-get update && sudo apt-get install git
   override:
-    - 'bundle install'
-    - 'rvm 2.0.0-p598 exec bundle install'
-    - 'rvm 2.1.8 exec bundle install'
-    - 'rvm 2.2.5 exec bundle install'
-    - 'rvm 2.3.1 exec bundle install'
+    - 'bundle install --without landscape'
+    - 'rvm 2.0.0-p598 exec bundle install --without landscape'
+    - 'rvm 2.1.8 exec bundle install --without landscape'
+    - 'rvm 2.2.5 exec bundle install --without landscape'
+    - 'rvm 2.3.1 exec bundle install --without landscape'
 
 test:
   override:

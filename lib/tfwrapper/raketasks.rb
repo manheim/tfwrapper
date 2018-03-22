@@ -6,6 +6,15 @@ require 'rake'
 require 'rubygems'
 require 'tfwrapper/version'
 
+# :nocov:
+begin
+  require 'terraform_landscape'
+  HAVE_LANDSCAPE = true
+rescue
+  HAVE_LANDSCAPE = false
+end
+# :nocov:
+
 module TFWrapper
   # Generates Rake tasks for working with Terraform.
   class RakeTasks
@@ -63,6 +72,22 @@ module TFWrapper
     #   the body of each task. Called with two arguments, the String full
     #   (namespaced) name of the task being executed, and ``tf_dir``. This will
     #   not execute if the body of the task fails.
+    # @option opts [Bool] :disable_landscape By default, if the
+    #  ``terraform_landscape`` gem can be loaded, it will be used to reformat
+    #  the output of ``terraform plan``. If this is not desired, set to
+    #  ``true`` to disable landscale. Default: ``false``.
+    # @option opts [Symbol, nil] :landscape_progress The ``terraform_landscape``
+    #  code used to reformat plan output requires the full output of the
+    #  complete ``plan`` execution. By default, this means that when landscape
+    #  is used, no output will appear from the time ``terraform plan`` begins
+    #  until the command is complete. If progress output is desired, this option
+    #  can be set to one of the following: ``:dots`` to print a dot to STDOUT
+    #  for every line of ``terraform plan`` output, ``:lines`` to print a dot
+    #  followed by a newline (e.g. for systems like Jenkins that line buffer)
+    #  for every line of ``terraform plan`` output, or ``:stream`` to stream
+    #  the raw ``terraform plan`` output (which will then be followed by the
+    #  reformatted landscape output). Default is ``nil`` to show no progress
+    #  output.
     def initialize(tf_dir, opts = {})
       # find the directory that contains the Rakefile
       rakedir = File.realpath(Rake.application.rakefile)
@@ -74,6 +99,15 @@ module TFWrapper
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
+      @disable_landscape = opts.fetch(:disable_landscape, false)
+      @landscape_progress = opts.fetch(:landscape_progress, nil)
+      unless [:dots, :lines, :stream, nil].include?(@landscape_progress)
+        raise(
+          ArgumentError,
+          'landscape_progress option must be one of: ' \
+          '[:dots, :lines, :stream, nil]'
+        )
+      end
       @before_proc = opts.fetch(:before_proc, nil)
       if !@before_proc.nil? && !@before_proc.is_a?(Proc)
         raise(
@@ -160,7 +194,13 @@ module TFWrapper
             args.extras
           )
 
-          terraform_runner(cmd)
+          stream_type = if HAVE_LANDSCAPE && !@disable_landscape
+                          @landscape_progress
+                        else
+                          :stream
+                        end
+          outerr = terraform_runner(cmd, progress: stream_type)
+          landscape_format(outerr) if HAVE_LANDSCAPE && !@disable_landscape
           @after_proc.call(t.name, @tf_dir) unless @after_proc.nil?
         end
       end
@@ -296,13 +336,41 @@ module TFWrapper
       res
     end
 
+    # Given a string of terraform plan output, format it with
+    # terraform_landscape and print the result to STDOUT.
+    def landscape_format(output)
+      begin
+        p = TerraformLandscape::Printer.new(
+          TerraformLandscape::Output.new(STDOUT)
+        )
+        p.process_string(output)
+      rescue Exception => ex
+        STDERR.puts "Exception calling terraform_landscape to reformat " \
+                    "output: #{ex.class.name}: #{ex}"
+        puts output unless @landscape_progress == :stream
+      end
+    end
+
     # Run a Terraform command, providing some useful output and handling AWS
     # API rate limiting gracefully. Raises StandardError on failure. The command
     # is run in @tf_dir.
     #
     # @param cmd [String] Terraform command to run
+    # @option opts [Hash] :progress How to handle streaming output. Possible
+    #  values are ``:stream`` (default) to stream each line in STDOUT/STDERR
+    #  to STDOUT, ``:dots`` to print a dot for each line, ``:lines`` to print
+    #  a dot followed by a newline for each line, or ``nil`` to not stream any
+    #  output at all.
+    # @return [String] combined STDOUT and STDERR
     # rubocop:disable Metrics/PerceivedComplexity
-    def terraform_runner(cmd)
+    def terraform_runner(cmd, opts = {})
+      stream_type = opts.fetch(:progress, :stream)
+      unless [:dots, :lines, :stream, nil].include?(stream_type)
+        raise(
+          ArgumentError,
+          'progress option must be one of: [:dots, :lines, :stream, nil]'
+        )
+      end
       require 'retries'
       STDERR.puts "terraform_runner command: '#{cmd}' (in #{@tf_dir})"
       out_err = nil
@@ -321,7 +389,9 @@ module TFWrapper
       ) do
         # this streams STDOUT and STDERR as a combined stream,
         # and also captures them as a combined string
-        out_err, status = TFWrapper::Helpers.run_cmd_stream_output(cmd, @tf_dir)
+        out_err, status = TFWrapper::Helpers.run_cmd_stream_output(
+          cmd, @tf_dir, stream_type: stream_type
+        )
         if status != 0 && out_err.include?('hrottling')
           raise StandardError, 'Terraform hit AWS API rate limiting'
         end
@@ -340,6 +410,7 @@ module TFWrapper
           "(exited #{status})"
       end
       STDERR.puts "terraform_runner command '#{cmd}' finished and exited 0"
+      out_err
     end
     # rubocop:enable Metrics/PerceivedComplexity
 
