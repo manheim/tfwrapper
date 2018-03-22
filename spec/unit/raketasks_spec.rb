@@ -421,7 +421,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
-        .with('terraform plan -var-file file.tfvars.json', {progress: nil})
+        .with('terraform plan -var-file file.tfvars.json', progress: nil)
       Rake.application['tf:plan'].invoke
     end
     it 'runs the plan command with one target' do
@@ -431,7 +431,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:terraform_runner)
       expect(subject).to receive(:terraform_runner).once
         .with('terraform plan -var-file file.tfvars.json ' \
-              '-target tar.get[1]', {progress: nil})
+              '-target tar.get[1]', progress: nil)
       Rake.application['tf:plan'].invoke('tar.get[1]')
     end
     it 'runs the plan command with three targets' do
@@ -442,7 +442,7 @@ describe TFWrapper::RakeTasks do
       expect(subject).to receive(:terraform_runner).once
         .with('terraform plan -var-file file.tfvars.json ' \
               '-target tar.get[1] -target t.gt[2] -target my.target[3]',
-              {progress: nil})
+              progress: nil)
       Rake.application['tf:plan'].invoke(
         'tar.get[1]', 't.gt[2]', 'my.target[3]'
       )
@@ -456,7 +456,7 @@ describe TFWrapper::RakeTasks do
       it 'runs plan with default progress type' do
         Rake.application['tf:plan'].clear_prerequisites
         expect(subject).to receive(:terraform_runner).once
-          .with('terraform plan -var-file file.tfvars.json', {progress: nil})
+          .with('terraform plan -var-file file.tfvars.json', progress: nil)
         expect(subject).to receive(:landscape_format).once.with('TFoutput')
         Rake.application['tf:plan'].invoke
       end
@@ -464,7 +464,7 @@ describe TFWrapper::RakeTasks do
         Rake.application['tf:plan'].clear_prerequisites
         subject.instance_variable_set('@landscape_progress', :dots)
         expect(subject).to receive(:terraform_runner).once
-          .with('terraform plan -var-file file.tfvars.json', {progress: :dots})
+          .with('terraform plan -var-file file.tfvars.json', progress: :dots)
         expect(subject).to receive(:landscape_format).once.with('TFoutput')
         Rake.application['tf:plan'].invoke
       end
@@ -472,7 +472,7 @@ describe TFWrapper::RakeTasks do
         Rake.application['tf:plan'].clear_prerequisites
         subject.instance_variable_set('@landscape_progress', :lines)
         expect(subject).to receive(:terraform_runner).once
-          .with('terraform plan -var-file file.tfvars.json', {progress: :lines})
+          .with('terraform plan -var-file file.tfvars.json', progress: :lines)
         expect(subject).to receive(:landscape_format).once.with('TFoutput')
         Rake.application['tf:plan'].invoke
       end
@@ -481,7 +481,7 @@ describe TFWrapper::RakeTasks do
         subject.instance_variable_set('@landscape_progress', :stream)
         expect(subject).to receive(:terraform_runner).once
           .with('terraform plan -var-file file.tfvars.json',
-                {progress: :stream})
+                progress: :stream)
         expect(subject).to receive(:landscape_format).once.with('TFoutput')
         Rake.application['tf:plan'].invoke
       end
@@ -495,7 +495,7 @@ describe TFWrapper::RakeTasks do
         Rake.application['tf:plan'].clear_prerequisites
         expect(subject).to receive(:terraform_runner).once
           .with(
-            'terraform plan -var-file file.tfvars.json', {progress: :stream}
+            'terraform plan -var-file file.tfvars.json', progress: :stream
           )
         expect(subject).to_not receive(:landscape_format)
         Rake.application['tf:plan'].invoke
@@ -511,7 +511,7 @@ describe TFWrapper::RakeTasks do
         Rake.application['tf:plan'].clear_prerequisites
         expect(subject).to receive(:terraform_runner).once
           .with(
-            'terraform plan -var-file file.tfvars.json', {progress: :stream}
+            'terraform plan -var-file file.tfvars.json', progress: :stream
           )
         expect(subject).to_not receive(:landscape_format)
         Rake.application['tf:plan'].invoke
@@ -1101,7 +1101,7 @@ describe TFWrapper::RakeTasks do
       )
     end
   end
-  describe '#landscape_format', :if => HAVE_LANDSCAPE do
+  describe '#landscape_format', if: HAVE_LANDSCAPE do
     before(:each) do
       allow(STDERR).to receive(:puts)
       allow(STDOUT).to receive(:puts)
@@ -1136,13 +1136,14 @@ describe TFWrapper::RakeTasks do
           allow(TerraformLandscape::Output)
             .to receive(:new).and_return(dbl_output)
           allow(dbl_printer).to receive(:process_string)
-            .and_raise(RuntimeError, "FooError")
+            .and_raise(RuntimeError, 'FooError')
 
           expect(TerraformLandscape::Output)
             .to receive(:new).once.with(STDOUT)
           expect(TerraformLandscape::Printer)
             .to receive(:new).once.with(dbl_output)
-          expect(dbl_printer).to receive(:process_string).once.with('PlanOutput')
+          expect(dbl_printer)
+            .to receive(:process_string).once.with('PlanOutput')
           expect(STDERR).to receive(:puts).once
             .with(
               'Exception calling terraform_landscape to reformat output: ' \
@@ -1162,13 +1163,14 @@ describe TFWrapper::RakeTasks do
           allow(TerraformLandscape::Output)
             .to receive(:new).and_return(dbl_output)
           allow(dbl_printer).to receive(:process_string)
-            .and_raise(RuntimeError, "FooError")
+            .and_raise(RuntimeError, 'FooError')
 
           expect(TerraformLandscape::Output)
             .to receive(:new).once.with(STDOUT)
           expect(TerraformLandscape::Printer)
             .to receive(:new).once.with(dbl_output)
-          expect(dbl_printer).to receive(:process_string).once.with('PlanOutput')
+          expect(dbl_printer)
+            .to receive(:process_string).once.with('PlanOutput')
           expect(STDERR).to receive(:puts).once
             .with(
               'Exception calling terraform_landscape to reformat output: ' \
@@ -1189,7 +1191,7 @@ describe TFWrapper::RakeTasks do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .with(any_args).and_return(['MyOutput', 0])
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .once.with('foo', 'tfdir', {stream_type: :stream})
+        .once.with('foo', 'tfdir', stream_type: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1205,7 +1207,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(2).times.with('foo', 'tfdir', {stream_type: :stream})
+        .exactly(2).times.with('foo', 'tfdir', stream_type: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1227,7 +1229,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', {stream_type: :stream})
+        .exactly(3).times.with('foo', 'tfdir', stream_type: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1252,7 +1254,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', {stream_type: :dots})
+        .exactly(3).times.with('foo', 'tfdir', stream_type: :dots)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1279,7 +1281,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', {stream_type: nil})
+        .exactly(3).times.with('foo', 'tfdir', stream_type: nil)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1298,7 +1300,7 @@ describe TFWrapper::RakeTasks do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .and_return(['', 1])
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
-        .with('foo', 'tfdir', {stream_type: :stream})
+        .with('foo', 'tfdir', stream_type: :stream)
       expect(STDERR).to receive(:puts).once
         .with('terraform_runner command: \'foo\' (in tfdir)')
       expect { subject.terraform_runner('foo') }

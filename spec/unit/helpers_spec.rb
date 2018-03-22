@@ -201,11 +201,11 @@ describe TFWrapper::Helpers do
         expect(Open3).to_not receive(:popen2e)
         expect(STDOUT).to_not receive(:puts)
         expect($stdout).to_not receive(:sync=)
-        expect {
+        expect do
           TFWrapper::Helpers.run_cmd_stream_output(
             'foo bar', '/foo', progress: :foo
           )
-        }.to raise_error(ArgumentError, /progress option must be one of/)
+        end.to raise_error(ArgumentError, /progress option must be one of/)
       end
     end
   end

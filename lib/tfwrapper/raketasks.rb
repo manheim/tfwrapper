@@ -339,16 +339,14 @@ module TFWrapper
     # Given a string of terraform plan output, format it with
     # terraform_landscape and print the result to STDOUT.
     def landscape_format(output)
-      begin
-        p = TerraformLandscape::Printer.new(
-          TerraformLandscape::Output.new(STDOUT)
-        )
-        p.process_string(output)
-      rescue Exception => ex
-        STDERR.puts "Exception calling terraform_landscape to reformat " \
-                    "output: #{ex.class.name}: #{ex}"
-        puts output unless @landscape_progress == :stream
-      end
+      p = TerraformLandscape::Printer.new(
+        TerraformLandscape::Output.new(STDOUT)
+      )
+      p.process_string(output)
+    rescue StandardError, ScriptError => ex
+      STDERR.puts 'Exception calling terraform_landscape to reformat ' \
+                  "output: #{ex.class.name}: #{ex}"
+      puts output unless @landscape_progress == :stream
     end
 
     # Run a Terraform command, providing some useful output and handling AWS
