@@ -1,0 +1,43 @@
+{
+    "version": 3,
+    "terraform_version": "0.11.2",
+    "serial": 1,
+    "lineage": "2bab32f5-67fc-4210-8a74-af61d21a5420",
+    "modules": [
+        {
+            "path": [
+                "root"
+            ],
+            "outputs": {
+                "foo_variable": {
+                    "sensitive": false,
+                    "type": "string",
+                    "value": "bar"
+                }
+            },
+            "resources": {
+                "consul_key_prefix.landscapeTest": {
+                    "type": "consul_key_prefix",
+                    "depends_on": [
+                        "local.keys"
+                    ],
+                    "primary": {
+                        "id": "landscapeTest/",
+                        "attributes": {
+                            "datacenter": "dc1",
+                            "id": "landscapeTest/",
+                            "path_prefix": "landscapeTest/",
+                            "subkeys.%": "1",
+                            "subkeys.foo": "{\"bar\":\"bar2val\",\"baz\":\"baz2val\",\"foo\":\"foo2val\"}"
+                        },
+                        "meta": {},
+                        "tainted": false
+                    },
+                    "deposed": [],
+                    "provider": "provider.consul"
+                }
+            },
+            "depends_on": []
+        }
+    ]
+}

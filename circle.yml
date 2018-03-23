@@ -27,5 +27,6 @@ test:
     - 'rvm 2.3.1 exec bundle exec rake spec:acceptance TF_VERSION=0.10.0'
     - 'rvm 2.3.1 exec bundle exec rake spec:acceptance TF_VERSION=0.10.2'
     - 'rvm 2.3.1 exec bundle exec rake spec:acceptance TF_VERSION=0.11.2'
-    - 'rvm 2.4.1 exec bundle exec rake spec:acceptance TF_VERSION=latest'
+    - 'rvm 2.3.1 exec bundle exec rake spec:acceptance TF_VERSION=latest'
+    - 'rvm 2.4.1 exec bundle exec rake spec:acceptance TF_VERSION=0.11.2'
     - 'bundle exec rake yard:generate'

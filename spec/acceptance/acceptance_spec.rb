@@ -18,6 +18,10 @@ else
   APPLY_CMD = 'terraform apply'
 end
 
+without_landscape = !HAVE_LANDSCAPE && TF_VERSION == '0.11.2'
+with_landscape = HAVE_LANDSCAPE && TF_VERSION == '0.11.2'
+latest_tf_ver = latest_tf_version
+
 Diplomat.configure do |config|
   config.url = 'http://127.0.0.1:8500'
 end
@@ -731,6 +735,194 @@ describe 'tfwrapper' do
       it 'shows the outputs' do
         expect(@out_err).to include('foo_variable = fooval')
         expect(@out_err).to_not include('bar_variable = ')
+      end
+    end
+  end
+  context 'landscapeTest', order: :defined do
+    before(:all) do
+      @fixturepath = File.absolute_path(
+        File.join(File.dirname(__FILE__), '..', 'fixtures', 'landscapeTest')
+      )
+    end
+    before(:each) do
+      Diplomat::Kv.put(
+        'landscapeTest/foo', '{"bar":"barval","baz":"bazval","foo":"fooval"}'
+      )
+      Diplomat::Kv.put(
+        'terraform/landscapeTest',
+        File.read(File.join(@fixturepath, 'state.json'))
+      )
+    end
+    context 'without landscape installed' , if: without_landscape  do
+      describe 'default_tf:plan' do
+        before(:all) do
+          @out_err, @ecode = Open3.capture2e(
+            'timeout -k 60 45 bundle exec rake default_tf:plan',
+            chdir: @fixturepath
+          )
+          @varpath = File.join(@fixturepath, 'default_build.tfvars.json')
+        end
+        after(:all) do
+          File.delete(@varpath) if File.file?(@varpath)
+        end
+        it 'does not time out' do
+          expect(@ecode.exitstatus).to_not eq(124)
+          expect(@ecode.exitstatus).to_not eq(137)
+        end
+        it 'exits zero' do
+          expect(@ecode.exitstatus).to eq(0)
+        end
+        it 'returns unmodified terraform output' do
+          expected = clean_tf_plan_output(
+            File.read(File.join(@fixturepath, 'without_landscape.out')),
+            latest_tf_ver, @fixturepath
+          )
+          expect(@out_err.strip).to eq(expected.strip)
+        end
+      end
+    end
+    context 'with landscape installed', if: with_landscape do
+      context 'and disabled' do
+        describe 'disabled_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake disabled_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'disabled_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits zero' do
+            expect(@ecode.exitstatus).to eq(0)
+          end
+          it 'returns unmodified terraform output' do
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'without_landscape.out')),
+              latest_tf_ver, @fixturepath
+            ).gsub('default_build.tfvars.json', 'disabled_build.tfvars.json')
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
+      end
+      context 'and default progress' do
+        describe 'default_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake default_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'default_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits zero' do
+            expect(@ecode.exitstatus).to eq(0)
+          end
+          it 'returns landscape output and no plan output' do
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'with_landscape_default.out')),
+              latest_tf_ver, @fixturepath
+            )
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
+      end
+      context 'and dots progress' do
+        describe 'dots_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake dots_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'dots_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits zero' do
+            expect(@ecode.exitstatus).to eq(0)
+          end
+          it 'returns progress dots for plan output and landscape output' do
+            File.open(File.join(@fixturepath, 'with_landscape_dots.out'), 'w') { |f| f.write(@out_err) }
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'with_landscape_dots.out')),
+              latest_tf_ver, @fixturepath
+            )
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
+      end
+      context 'and lines progress' do
+        describe 'lines_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake lines_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'lines_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits zero' do
+            expect(@ecode.exitstatus).to eq(0)
+          end
+          it 'returns progress lines for plan output and landscape output' do
+            File.open(File.join(@fixturepath, 'with_landscape_lines.out'), 'w') { |f| f.write(@out_err) }
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'with_landscape_lines.out')),
+              latest_tf_ver, @fixturepath
+            )
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
+      end
+      context 'and stream progress' do
+        describe 'stream_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake stream_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'stream_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits zero' do
+            expect(@ecode.exitstatus).to eq(0)
+          end
+          it 'returns streaming plan output and landscape output' do
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'with_landscape_stream.out')),
+              latest_tf_ver, @fixturepath
+            )
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
       end
     end
   end

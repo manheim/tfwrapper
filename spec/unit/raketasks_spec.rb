@@ -1191,7 +1191,7 @@ describe TFWrapper::RakeTasks do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .with(any_args).and_return(['MyOutput', 0])
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .once.with('foo', 'tfdir', stream_type: :stream)
+        .once.with('foo', 'tfdir', progress: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1207,7 +1207,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(2).times.with('foo', 'tfdir', stream_type: :stream)
+        .exactly(2).times.with('foo', 'tfdir', progress: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1229,7 +1229,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', stream_type: :stream)
+        .exactly(3).times.with('foo', 'tfdir', progress: :stream)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1254,7 +1254,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', stream_type: :dots)
+        .exactly(3).times.with('foo', 'tfdir', progress: :dots)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1281,7 +1281,7 @@ describe TFWrapper::RakeTasks do
       end
 
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
-        .exactly(3).times.with('foo', 'tfdir', stream_type: nil)
+        .exactly(3).times.with('foo', 'tfdir', progress: nil)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
@@ -1300,7 +1300,7 @@ describe TFWrapper::RakeTasks do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .and_return(['', 1])
       expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
-        .with('foo', 'tfdir', stream_type: :stream)
+        .with('foo', 'tfdir', progress: :stream)
       expect(STDERR).to receive(:puts).once
         .with('terraform_runner command: \'foo\' (in tfdir)')
       expect { subject.terraform_runner('foo') }

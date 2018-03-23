@@ -388,7 +388,7 @@ module TFWrapper
         # this streams STDOUT and STDERR as a combined stream,
         # and also captures them as a combined string
         out_err, status = TFWrapper::Helpers.run_cmd_stream_output(
-          cmd, @tf_dir, stream_type: stream_type
+          cmd, @tf_dir, progress: stream_type
         )
         if status != 0 && out_err.include?('hrottling')
           raise StandardError, 'Terraform hit AWS API rate limiting'

@@ -69,6 +69,7 @@ module TFWrapper
       end
       # rubocop:disable Style/RedundantReturn
       $stdout.sync = old_sync
+      puts '' if stream_type == :dots
       return all_out_err, exit_status
       # rubocop:enable Style/RedundantReturn
     end

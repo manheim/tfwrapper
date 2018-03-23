@@ -76,7 +76,7 @@ describe TFWrapper::Helpers do
 
         expect(Open3).to receive(:popen2e)
           .once.with('foo bar', chdir: '/foo')
-        expect(STDOUT).to_not receive(:puts)
+        expect(STDOUT).to receive(:puts).once.with('')
         expect(STDOUT).to receive(:print).once.with('.')
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
