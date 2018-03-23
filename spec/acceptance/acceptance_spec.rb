@@ -753,7 +753,7 @@ describe 'tfwrapper' do
         File.read(File.join(@fixturepath, 'state.json'))
       )
     end
-    context 'without landscape installed' , if: without_landscape  do
+    context 'without landscape installed', if: without_landscape do
       describe 'default_tf:plan' do
         before(:all) do
           @out_err, @ecode = Open3.capture2e(
@@ -858,7 +858,6 @@ describe 'tfwrapper' do
             expect(@ecode.exitstatus).to eq(0)
           end
           it 'returns progress dots for plan output and landscape output' do
-            File.open(File.join(@fixturepath, 'with_landscape_dots.out'), 'w') { |f| f.write(@out_err) }
             expected = clean_tf_plan_output(
               File.read(File.join(@fixturepath, 'with_landscape_dots.out')),
               latest_tf_ver, @fixturepath
@@ -887,7 +886,6 @@ describe 'tfwrapper' do
             expect(@ecode.exitstatus).to eq(0)
           end
           it 'returns progress lines for plan output and landscape output' do
-            File.open(File.join(@fixturepath, 'with_landscape_lines.out'), 'w') { |f| f.write(@out_err) }
             expected = clean_tf_plan_output(
               File.read(File.join(@fixturepath, 'with_landscape_lines.out')),
               latest_tf_ver, @fixturepath
