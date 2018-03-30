@@ -24,10 +24,22 @@ def desired_tf_version
     return ENV['TF_VERSION']
   end
   # else get the latest release from GitHub
+  latest_tf_version
+end
+
+def latest_tf_version
   resp = Faraday.get('https://api.github.com/repos/hashicorp/terraform/releases/latest')
   rel = JSON.parse(resp.body)['tag_name'].sub(/^v/, '')
   puts "Found latest terraform release on GitHub: #{rel}"
   rel
+end
+
+# Given the example terraform plan output with placeholders for the
+# latest terraform version and fixtures path, return the interpolated string.
+def clean_tf_plan_output(raw_out, latest_ver, fixture_path)
+  raw_out
+    .gsub('%%TF_LATEST_VER%%', latest_ver)
+    .gsub('%%FIXTUREPATH%%', fixture_path)
 end
 
 class HashicorpFetcher

@@ -31,8 +31,20 @@ module TFWrapper
     #
     # @param cmd [String] command to run
     # @param pwd [String] directory/path to run command in
+    # @option opts [Hash] :progress How to handle streaming output. Possible
+    #  values are ``:stream`` (default) to stream each line in STDOUT/STDERR
+    #  to STDOUT, ``:dots`` to print a dot for each line, ``:lines`` to print
+    #  a dot followed by a newline for each line, or ``nil`` to not stream any
+    #  output at all.
     # @return [Array] - out_err [String], exit code [Fixnum]
-    def self.run_cmd_stream_output(cmd, pwd)
+    def self.run_cmd_stream_output(cmd, pwd, opts = {})
+      stream_type = opts.fetch(:progress, :stream)
+      unless [:dots, :lines, :stream, nil].include?(stream_type)
+        raise(
+          ArgumentError,
+          'progress option must be one of: [:dots, :lines, :stream, nil]'
+        )
+      end
       old_sync = $stdout.sync
       $stdout.sync = true
       all_out_err = ''.dup
@@ -41,7 +53,13 @@ module TFWrapper
         stdin.close_write
         begin
           while (line = stdout_and_err.gets)
-            puts line
+            if stream_type == :stream
+              puts line
+            elsif stream_type == :dots
+              STDOUT.print '.'
+            elsif stream_type == :lines
+              puts '.'
+            end
             all_out_err << line
           end
         rescue IOError => e
@@ -51,6 +69,7 @@ module TFWrapper
       end
       # rubocop:disable Style/RedundantReturn
       $stdout.sync = old_sync
+      puts '' if stream_type == :dots
       return all_out_err, exit_status
       # rubocop:enable Style/RedundantReturn
     end

@@ -1,3 +1,8 @@
+Version 0.5.0
+
+  - Add support for using terraform_landscape gem, if present, to reformat plan output; see README for usage.
+  - Add CircleCI testing under ruby 2.4.1, and acceptance tests for terraform 0.11.2.
+
 Version 0.4.1
 
   - Upgrade rubocop, yard and diplomat development dependency versions

@@ -54,10 +54,89 @@ describe TFWrapper::Helpers do
         expect(Open3).to receive(:popen2e)
           .once.with('foo bar', chdir: '/foo')
         expect(STDOUT).to receive(:puts).once.with('mystdout')
+        expect(STDOUT).to_not receive(:print)
         expect($stdout).to receive(:sync=).once.with(true)
         expect($stdout).to receive(:sync=).once.with(false)
         expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar', '/foo'))
           .to eq(['mystdout', 0])
+      end
+    end
+    context 'progress dots' do
+      it 'prints dots and returns output' do
+        dbl_wait_thread = double(Thread)
+        @outerrpipe_w.write('mystdout')
+        @outerrpipe_w.close
+        es = double('exitstatus', exitstatus: 0)
+        allow(dbl_wait_thread).to receive(:value).and_return(es)
+        allow($stdout).to receive(:sync).and_return(false)
+        allow($stdout).to receive(:sync=).with(true)
+        allow(Open3).to receive(:popen2e).and_yield(
+          @inpipe_w, @outerrpipe_r, dbl_wait_thread
+        )
+
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', chdir: '/foo')
+        expect(STDOUT).to receive(:puts).once.with('')
+        expect(STDOUT).to receive(:print).once.with('.')
+        expect($stdout).to receive(:sync=).once.with(true)
+        expect($stdout).to receive(:sync=).once.with(false)
+        expect(
+          TFWrapper::Helpers.run_cmd_stream_output(
+            'foo bar', '/foo', progress: :dots
+          )
+        ).to eq(['mystdout', 0])
+      end
+    end
+    context 'progress lines' do
+      it 'prints a dot per line and returns output' do
+        dbl_wait_thread = double(Thread)
+        @outerrpipe_w.write('mystdout')
+        @outerrpipe_w.close
+        es = double('exitstatus', exitstatus: 0)
+        allow(dbl_wait_thread).to receive(:value).and_return(es)
+        allow($stdout).to receive(:sync).and_return(false)
+        allow($stdout).to receive(:sync=).with(true)
+        allow(Open3).to receive(:popen2e).and_yield(
+          @inpipe_w, @outerrpipe_r, dbl_wait_thread
+        )
+
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', chdir: '/foo')
+        expect(STDOUT).to receive(:puts).once.with('.')
+        expect(STDOUT).to_not receive(:print)
+        expect($stdout).to receive(:sync=).once.with(true)
+        expect($stdout).to receive(:sync=).once.with(false)
+        expect(
+          TFWrapper::Helpers.run_cmd_stream_output(
+            'foo bar', '/foo', progress: :lines
+          )
+        ).to eq(['mystdout', 0])
+      end
+    end
+    context 'progress nil' do
+      it 'does not print anything but returns output' do
+        dbl_wait_thread = double(Thread)
+        @outerrpipe_w.write('mystdout')
+        @outerrpipe_w.close
+        es = double('exitstatus', exitstatus: 0)
+        allow(dbl_wait_thread).to receive(:value).and_return(es)
+        allow($stdout).to receive(:sync).and_return(false)
+        allow($stdout).to receive(:sync=).with(true)
+        allow(Open3).to receive(:popen2e).and_yield(
+          @inpipe_w, @outerrpipe_r, dbl_wait_thread
+        )
+
+        expect(Open3).to receive(:popen2e)
+          .once.with('foo bar', chdir: '/foo')
+        expect(STDOUT).to_not receive(:puts)
+        expect(STDOUT).to_not receive(:print)
+        expect($stdout).to receive(:sync=).once.with(true)
+        expect($stdout).to receive(:sync=).once.with(false)
+        expect(
+          TFWrapper::Helpers.run_cmd_stream_output(
+            'foo bar', '/foo', progress: nil
+          )
+        ).to eq(['mystdout', 0])
       end
     end
     context 'IOError' do
@@ -104,6 +183,29 @@ describe TFWrapper::Helpers do
         expect($stdout).to receive(:sync=).once.with(false)
         expect(TFWrapper::Helpers.run_cmd_stream_output('foo bar', '/foo'))
           .to eq(["mystdout\nSTDERR\n", 23])
+      end
+    end
+    context 'invalid :progress option' do
+      it 'raises an error' do
+        dbl_wait_thread = double(Thread)
+        @outerrpipe_w.write('mystdout')
+        @outerrpipe_w.close
+        es = double('exitstatus', exitstatus: 0)
+        allow(dbl_wait_thread).to receive(:value).and_return(es)
+        allow($stdout).to receive(:sync).and_return(false)
+        allow($stdout).to receive(:sync=).with(true)
+        allow(Open3).to receive(:popen2e).and_yield(
+          @inpipe_w, @outerrpipe_r, dbl_wait_thread
+        )
+
+        expect(Open3).to_not receive(:popen2e)
+        expect(STDOUT).to_not receive(:puts)
+        expect($stdout).to_not receive(:sync=)
+        expect do
+          TFWrapper::Helpers.run_cmd_stream_output(
+            'foo bar', '/foo', progress: :foo
+          )
+        end.to raise_error(ArgumentError, /progress option must be one of/)
       end
     end
   end
