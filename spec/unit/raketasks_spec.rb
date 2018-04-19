@@ -1306,6 +1306,18 @@ describe TFWrapper::RakeTasks do
       expect { subject.terraform_runner('foo') }
         .to raise_error('Errors have occurred executing: \'foo\' (exited 1)')
     end
+    it 'prints output to STDERR if plan exits non-zero and not :stream' do
+      allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
+        .and_return(['myoutput', 1])
+      expect(TFWrapper::Helpers).to receive(:run_cmd_stream_output).once
+        .with('foo', 'tfdir', progress: :dots)
+      expect(STDERR).to receive(:puts).once
+        .with('terraform_runner command: \'foo\' (in tfdir)')
+      expect(STDERR).to receive(:puts).once
+        .with('myoutput')
+      expect { subject.terraform_runner('foo', progress: :dots) }
+        .to raise_error('Errors have occurred executing: \'foo\' (exited 1)')
+    end
     it 'raises an error if the progress option is invalid' do
       allow(TFWrapper::Helpers).to receive(:run_cmd_stream_output)
         .and_return(['', 1])
