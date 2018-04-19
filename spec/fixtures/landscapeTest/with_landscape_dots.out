@@ -1,12 +1,12 @@
 Terraform v0.11.2
 
 Your version of Terraform is out of date! The latest version
-is 0.11.5. You can update by downloading from www.terraform.io/downloads.html
+is %%TF_LATEST_VER%%. You can update by downloading from www.terraform.io/downloads.html
 terraform_runner command: 'terraform init -input=false' (in /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest)
 Running with: Terraform v0.11.2
 
 Your version of Terraform is out of date! The latest version
-is 0.11.5. You can update by downloading from www.terraform.io/downloads.html
+is %%TF_LATEST_VER%%. You can update by downloading from www.terraform.io/downloads.html
 
 [0m[1mInitializing the backend...[0m
 [0m[32m
@@ -43,4 +43,3 @@ Terraform vars:
                     }
 
 Plan: 0 to add, 1 to change, 0 to destroy.
-
