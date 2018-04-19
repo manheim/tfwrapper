@@ -1,0 +1,67 @@
+Terraform v0.11.2
+
+Your version of Terraform is out of date! The latest version
+is %%TF_LATEST_VER%%. You can update by downloading from www.terraform.io/downloads.html
+terraform_runner command: 'terraform init -input=false' (in /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/failingTerraform)
+Running with: Terraform v0.11.2
+
+Your version of Terraform is out of date! The latest version
+is %%TF_LATEST_VER%%. You can update by downloading from www.terraform.io/downloads.html
+
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "consul"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Checking for available provider plugins on https://releases.hashicorp.com...
+- Downloading plugin for provider "consul" (1.0.0)...
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+terraform_runner command 'terraform init -input=false' finished and exited 0
+Terraform vars written to: /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/failing_build.tfvars.json
+terraform_runner command: 'terraform plan -var-file /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/failing_build.tfvars.json' (in /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/failingTerraform)
+Terraform vars:
+............[31m
+[1m[31mError: [0m[0m[1mconsul_key_prefix.landscapeTest: "path_prefix": required field is not set[0m
+
+[0m[0m[0m
+[31m
+[1m[31mError: [0m[0m[1mconsul_key_prefix.landscapeTest: "subkeys": required field is not set[0m
+
+[0m[0m[0m
+[31m
+[1m[31mError: [0m[0m[1mconsul_key_prefix.landscapeTest: : invalid or unknown key: invalid_param[0m
+
+[0m[0m[0m
+rake aborted!
+StandardError: Errors have occurred executing: 'terraform plan -var-file /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/failing_build.tfvars.json' (exited 1)
+/home/jantman/manheim/git/github_dot_com/tfwrapper/lib/tfwrapper/raketasks.rb:409:in `terraform_runner'
+/home/jantman/manheim/git/github_dot_com/tfwrapper/lib/tfwrapper/raketasks.rb:202:in `block (2 levels) in install_plan'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli/exec.rb:75:in `load'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli/exec.rb:75:in `kernel_load'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli/exec.rb:28:in `run'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli.rb:424:in `exec'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/vendor/thor/lib/thor/command.rb:27:in `run'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/vendor/thor/lib/thor/invocation.rb:126:in `invoke_command'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/vendor/thor/lib/thor.rb:387:in `dispatch'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli.rb:27:in `dispatch'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/vendor/thor/lib/thor/base.rb:466:in `start'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/cli.rb:18:in `start'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/exe/bundle:30:in `block in <top (required)>'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/lib/bundler/friendly_errors.rb:122:in `with_friendly_errors'
+/home/jantman/.rvm/gems/ruby-2.4.1/gems/bundler-1.16.1/exe/bundle:22:in `<top (required)>'
+/home/jantman/.rvm/gems/ruby-2.4.1/bin/bundle:23:in `load'
+/home/jantman/.rvm/gems/ruby-2.4.1/bin/bundle:23:in `<main>'
+/home/jantman/.rvm/gems/ruby-2.4.1/bin/ruby_executable_hooks:15:in `eval'
+/home/jantman/.rvm/gems/ruby-2.4.1/bin/ruby_executable_hooks:15:in `<main>'
+Tasks: TOP => failing_tf:plan
+(See full trace by running task with --trace)

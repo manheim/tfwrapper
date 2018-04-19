@@ -30,3 +30,9 @@ TFWrapper::RakeTasks.install_tasks(
   namespace_prefix: 'lines',
   landscape_progress: :lines
 )
+
+TFWrapper::RakeTasks.install_tasks(
+  'failingTerraform/',
+  namespace_prefix: 'failing',
+  landscape_progress: :dots
+)
