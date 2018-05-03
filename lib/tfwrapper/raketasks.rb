@@ -404,6 +404,8 @@ module TFWrapper
       end
       # end exponential backoff
       unless status.zero?
+        # if we weren't streaming output, send it now
+        STDERR.puts out_err unless stream_type == :stream
         raise StandardError, "Errors have occurred executing: '#{cmd}' " \
           "(exited #{status})"
       end

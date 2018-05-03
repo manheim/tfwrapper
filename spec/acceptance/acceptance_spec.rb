@@ -922,6 +922,34 @@ describe 'tfwrapper' do
           end
         end
       end
+      context 'when terraform fails' do
+        describe 'failing_tf:plan' do
+          before(:all) do
+            @out_err, @ecode = Open3.capture2e(
+              'timeout -k 60 45 bundle exec rake failing_tf:plan',
+              chdir: @fixturepath
+            )
+            @varpath = File.join(@fixturepath, 'failing_build.tfvars.json')
+          end
+          after(:all) do
+            File.delete(@varpath) if File.file?(@varpath)
+          end
+          it 'does not time out' do
+            expect(@ecode.exitstatus).to_not eq(124)
+            expect(@ecode.exitstatus).to_not eq(137)
+          end
+          it 'exits 1' do
+            expect(@ecode.exitstatus).to eq(1)
+          end
+          it 'returns the terraform output' do
+            expected = clean_tf_plan_output(
+              File.read(File.join(@fixturepath, 'when_terraform_fails.out')),
+              latest_tf_ver, @fixturepath
+            )
+            expect(@out_err.strip).to eq(expected.strip)
+          end
+        end
+      end
     end
   end
 end

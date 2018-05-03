@@ -1,3 +1,7 @@
+Version 0.5.1
+
+  - Fix bug where terraform plan errors were suppressed if a plan run with landscape support enabled exited non-zero.
+
 Version 0.5.0
 
   - Add support for using terraform_landscape gem, if present, to reformat plan output; see README for usage.
