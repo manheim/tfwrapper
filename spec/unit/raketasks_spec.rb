@@ -1233,10 +1233,12 @@ describe TFWrapper::RakeTasks do
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\shit\sAWS\sAPI\srate\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sThrottling\sbar\s+
+          Terraform\shit\sAWS\sAPI\srate\s
           limiting;\sretry\sattempt\s1;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\shit\sAWS\sAPI\srate\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sThrottling\sbar\s+
+          Terraform\shit\sAWS\sAPI\srate\s
           limiting;\sretry\sattempt\s2;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command 'foo' finished and exited 0")
@@ -1258,11 +1260,13 @@ describe TFWrapper::RakeTasks do
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\scommand\sgot\s403\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sstatus\scode:\s403\sbar\s+
+          Terraform\scommand\sgot\s403\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
         attempt\s1;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\scommand\sgot\s403\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sstatus\scode:\s403\sbar\s+
+          Terraform\scommand\sgot\s403\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
         attempt\s2;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
@@ -1285,11 +1289,13 @@ describe TFWrapper::RakeTasks do
       expect(STDERR).to receive(:puts).once
         .with("terraform_runner command: 'foo' (in tfdir)")
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\scommand\sgot\s401\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sstatus\scode:\s401\sbar\s+
+        Terraform\scommand\sgot\s401\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
         attempt\s1;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
-        .with(/terraform_runner\sfailed\swith\sTerraform\scommand\sgot\s401\s
+        .with(/terraform_runner\sfailed\swith\sfoo\sstatus\scode:\s401\sbar\s+
+        Terraform\scommand\sgot\s401\s
         error\s-\saccess\sdenied\sor\scredentials\snot\spropagated;\sretry\s
         attempt\s2;\s.+\sseconds\shave\spassed\./x)
       expect(STDERR).to receive(:puts).once
