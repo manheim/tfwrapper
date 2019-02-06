@@ -1,0 +1,70 @@
+---
+dist: xenial
+language: ruby
+cache: bundler
+before_install:
+  - gem uninstall -v '>= 2' -i $(rvm gemdir)@global -ax bundler || true
+  - gem install bundler -v '< 2'
+install: true
+matrix:
+  include:
+  - rvm: ruby
+    install: bundle install --without landscape
+    script: ["bundle exec ruby --version", "bundle exec rake spec:unit"]
+    name: "ruby-latest unit"
+  - rvm: ruby
+    install: bundle install --without landscape
+    script: bundle exec rake rubocop
+    name: "ruby-latest rubocop"
+  - rvm: ruby
+    install: bundle install --without landscape
+    script: bundle exec rake yard:generate
+    name: "ruby-latest yard"
+  - rvm: 2.0
+    install: bundle install --without landscape
+    script: bundle exec rake spec:unit
+    name: "ruby-2.0 unit"
+  - rvm: 2.1
+    install: bundle install --without landscape
+    script: bundle exec rake spec:unit
+    name: "ruby-2.1 unit"
+  - rvm: 2.2
+    install: bundle install --without landscape
+    script: bundle exec rake spec:unit
+    name: "ruby-2.2 unit"
+  - rvm: 2.3
+    install: bundle install --without landscape
+    script: bundle exec rake spec:unit
+    name: "ruby-2.3 unit"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=0.9.2
+    name: "ruby-2.3 acceptance TF 0.9.2"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=0.9.7
+    name: "ruby-2.3 acceptance TF 0.9.7"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=0.10.0
+    name: "ruby-2.3 acceptance TF 0.10.0"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=0.10.2
+    name: "ruby-2.3 acceptance TF 0.10.2"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=0.11.2
+    name: "ruby-2.3 acceptance TF 0.11.2"
+  - rvm: 2.3
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=latest
+    name: "ruby-2.3 acceptance TF latest"
+  - rvm: 2.4
+    install: bundle install
+    script: bundle exec rake spec:unit
+    name: "ruby-2.4 unit"
+  - rvm: 2.4
+    install: bundle install
+    script: bundle exec rake spec:acceptance TF_VERSION=latest
+    name: "ruby-2.4 acceptance TF latest"

@@ -7,6 +7,7 @@ terraform {
 
 provider "consul" {
   address = "127.0.0.1:8500"
+  version = "1.0.0"
 }
 
 variable "foo" {}
