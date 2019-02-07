@@ -942,11 +942,22 @@ describe 'tfwrapper' do
             expect(@ecode.exitstatus).to eq(1)
           end
           it 'returns the terraform output' do
-            expected = clean_tf_plan_output(
-              File.read(File.join(@fixturepath, 'when_terraform_fails.out')),
-              latest_tf_ver, @fixturepath
+            expect(@out_err).to match(
+              /Terraform\sv0\.11\.2.*
+               terraform_runner\scommand:\s'terraform\sinit\s-input=false'.*
+               Running\swith:\sTerraform\sv0\.11\.2.*
+               Initializing\sthe\sbackend\.\.\..*
+               Successfully\sconfigured\sthe\sbackend\s"consul".*
+               Terraform\shas\sbeen\ssuccessfully\sinitialized.*
+               terraform_runner\scommand\s'terraform\sinit\s-input=false'\s
+               finished\sand\sexited\s0.*
+               consul_key_prefix\.landscapeTest:\s"path_prefix":\srequired\s
+               field\sis\snot\sset.*
+               rake\saborted.*
+               StandardError:\sErrors\shave\soccurred\sexecuting:\s
+               'terraform\splan\s-var-file.*
+               Tasks:\sTOP\s=>\sfailing_tf:plan.*/xm
             )
-            expect(@out_err.strip).to eq(expected.strip)
           end
         end
       end

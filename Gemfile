@@ -4,5 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 group :landscape do
-  gem 'terraform_landscape'
+  gem 'terraform_landscape', '0.2.2'
 end

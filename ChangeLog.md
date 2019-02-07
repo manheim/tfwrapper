@@ -1,3 +1,13 @@
+Unreleased Changes
+
+  - Switch testing from circleci.com to travis-ci.org
+  - Pin terraform_landscape dependency to 0.2.2 for compatibility with ruby < 2.5
+  - Acceptance tests:
+    - Use HashiCorp checkpoint API instead of GitHub Releases API to find latest terraform version, to work around query failures
+    - Pin consul provider versions to 1.0.0 to fix intermittent failures
+  - Switch Ruby versions used in tests to latest TravisCI versions
+  - Stop acceptance testing terraform 0.9.x, as newer versions require pinning the consul provider version but 0.9 doesn't support versioned providers.
+
 Version 0.5.1
 
   - Fix bug where terraform plan errors were suppressed if a plan run with landscape support enabled exited non-zero.

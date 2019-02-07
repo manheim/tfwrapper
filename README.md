@@ -1,6 +1,6 @@
 # tfwrapper
 
-Build of master branch: [![CircleCI](https://circleci.com/gh/manheim/tfwrapper.svg?style=svg)](https://circleci.com/gh/manheim/tfwrapper)
+Build of master branch: [![TravisCI](https://api.travis-ci.org/manheim/tfwrapper.svg?branch=master)](https://travis-ci.org/manheim/tfwrapper)
 
 Documentation: [http://www.rubydoc.info/gems/tfwrapper/](http://www.rubydoc.info/gems/tfwrapper/)
 

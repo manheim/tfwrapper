@@ -3,6 +3,7 @@
 require 'ffi'
 require 'faraday'
 require 'json'
+require 'retries'
 
 def fixture_dir
   File.absolute_path(
@@ -28,9 +29,9 @@ def desired_tf_version
 end
 
 def latest_tf_version
-  resp = Faraday.get('https://api.github.com/repos/hashicorp/terraform/releases/latest')
-  rel = JSON.parse(resp.body)['tag_name'].sub(/^v/, '')
-  puts "Found latest terraform release on GitHub: #{rel}"
+  resp = Faraday.get('https://checkpoint-api.hashicorp.com/v1/check/terraform')
+  rel = JSON.parse(resp.body)['current_version']
+  puts "Found latest terraform release as: #{rel}"
   rel
 end
 
