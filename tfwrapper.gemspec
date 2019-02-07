@@ -23,6 +23,7 @@ Gem::Specification.new do |gem|
   # awful, but these are to allow use with ruby 2.1.x
   gem.add_development_dependency 'ruby_dep', '1.3.1'
   gem.add_development_dependency 'listen', '3.0.7'
+  gem.add_development_dependency 'rb-inotify', '0.9.10'
 
   # guard-yard uses Pry which needs readline. If we're in RVM, we'll need this:
   gem.add_development_dependency 'rb-readline', '~> 0.5'

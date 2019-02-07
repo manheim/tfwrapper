@@ -391,15 +391,15 @@ module TFWrapper
           cmd, @tf_dir, progress: stream_type
         )
         if status != 0 && out_err.include?('hrottling')
-          raise StandardError, 'Terraform hit AWS API rate limiting'
+          raise StandardError, "#{out_err}\nTerraform hit AWS API rate limiting"
         end
         if status != 0 && out_err.include?('status code: 403')
-          raise StandardError, 'Terraform command got 403 error - access ' \
-            'denied or credentials not propagated'
+          raise StandardError, "#{out_err}\nTerraform command got 403 error " \
+            '- access denied or credentials not propagated'
         end
         if status != 0 && out_err.include?('status code: 401')
-          raise StandardError, 'Terraform command got 401 error - access ' \
-            'denied or credentials not propagated'
+          raise StandardError, "#{out_err}\nTerraform command got 401 error " \
+            '- access denied or credentials not propagated'
         end
       end
       # end exponential backoff

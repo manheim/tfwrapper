@@ -1,5 +1,8 @@
-Unreleased Changes
+Version 0.6.0
 
+  - Include full terraform output when a terraform run fails with output including ``hrottling``, ``status code: 403``, or ``status code: 401``. Previously terraform output was suppressed in these cases, which causes confusion with providers other than "aws" that include these strings in their failure output.
+  - In ``Gemfile``, for testing, pin terraform-landscape gem to 0.2.2 for Ruby 2.x compatibility.
+  - Pin ``rb-inotify`` dependency to 0.9.10 to allow build with Ruby < 2.2
   - Switch testing from circleci.com to travis-ci.org
   - Pin terraform_landscape dependency to 0.2.2 for compatibility with ruby < 2.5
   - Acceptance tests:
