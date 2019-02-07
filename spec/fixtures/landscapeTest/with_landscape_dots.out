@@ -2,7 +2,7 @@ Terraform v0.11.2
 
 Your version of Terraform is out of date! The latest version
 is %%TF_LATEST_VER%%. You can update by downloading from www.terraform.io/downloads.html
-terraform_runner command: 'terraform init -input=false' (in /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest)
+terraform_runner command: 'terraform init -input=false' (in %%FIXTUREPATH%%)
 Running with: Terraform v0.11.2
 
 Your version of Terraform is out of date! The latest version
@@ -27,10 +27,10 @@ If you ever set or change modules or backend configuration for Terraform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.[0m
 terraform_runner command 'terraform init -input=false' finished and exited 0
-Terraform vars written to: /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/dots_build.tfvars.json
-terraform_runner command: 'terraform plan -var-file /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/dots_build.tfvars.json' (in /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest)
+Terraform vars written to: %%FIXTUREPATH%%/dots_build.tfvars.json
+terraform_runner command: 'terraform plan -var-file %%FIXTUREPATH%%/dots_build.tfvars.json' (in %%FIXTUREPATH%%)
 Terraform vars:
-..........................terraform_runner command 'terraform plan -var-file /home/jantman/manheim/git/github_dot_com/tfwrapper/spec/fixtures/landscapeTest/dots_build.tfvars.json' finished and exited 0
+..........................terraform_runner command 'terraform plan -var-file %%FIXTUREPATH%%/dots_build.tfvars.json' finished and exited 0
 
 [0;33;49m~ consul_key_prefix.landscapeTest[0m
 [0;33;49m    subkeys.foo:   [0m{
