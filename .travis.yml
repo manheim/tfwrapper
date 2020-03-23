@@ -50,13 +50,13 @@ matrix:
     name: "ruby-2.3 acceptance TF 0.11.2"
   - rvm: 2.3
     install: bundle install
-    script: bundle exec rake spec:acceptance TF_VERSION=latest
-    name: "ruby-2.3 acceptance TF latest"
+    script: bundle exec rake spec:acceptance TF_VERSION=0.11.14
+    name: "ruby-2.3 acceptance TF 0.11.14"
   - rvm: 2.4
     install: bundle install
     script: bundle exec rake spec:unit
     name: "ruby-2.4 unit"
   - rvm: 2.4
     install: bundle install
-    script: bundle exec rake spec:acceptance TF_VERSION=latest
-    name: "ruby-2.4 acceptance TF latest"
+    script: bundle exec rake spec:acceptance TF_VERSION=0.11.14
+    name: "ruby-2.4 acceptance TF 0.11.14"
