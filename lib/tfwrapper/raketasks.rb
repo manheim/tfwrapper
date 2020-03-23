@@ -55,6 +55,8 @@ module TFWrapper
     #   configurations in the same Rakefile.
     # @option opts [Hash] :tf_vars_from_env hash of Terraform variables to the
     #   (required) environment variables to populate their values from
+    # @option opts [Hash] :allowed_empty_vars array of environment variable
+    #   names (specified in :tf_vars_from_env) to allow to be empty or missing.
     # @option opts [Hash] :tf_extra_vars hash of Terraform variables to their
     #   values; overrides any same-named keys in ``tf_vars_from_env``
     # @option opts [String] :consul_url URL to access Consul at, for the
@@ -96,6 +98,7 @@ module TFWrapper
       @ns_prefix = opts.fetch(:namespace_prefix, nil)
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
+      @allowed_empty_vars = opts.fetch(:allowed_empty_vars, [])
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
@@ -162,7 +165,9 @@ module TFWrapper
         desc 'Run terraform init with appropriate arguments'
         task :init do |t|
           @before_proc.call(t.name, @tf_dir) unless @before_proc.nil?
-          TFWrapper::Helpers.check_env_vars(@tf_vars_from_env.values)
+          TFWrapper::Helpers.check_env_vars(
+            @tf_vars_from_env.values, @allowed_empty_vars
+          )
           @tf_version = check_tf_version
           cmd = [
             'terraform',

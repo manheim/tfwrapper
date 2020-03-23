@@ -59,6 +59,7 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@tf_dir')).to eq('/rake/dir/tfdir')
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
+      expect(cls.instance_variable_get('@allowed_empty_vars')).to eq([])
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
@@ -87,6 +88,7 @@ describe TFWrapper::RakeTasks do
         'tf/dir',
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
+        allowed_empty_vars: %w[bar blam],
         tf_extra_vars: { 'baz' => 'blam' },
         consul_url: 'foobar',
         before_proc: bproc,
@@ -100,6 +102,8 @@ describe TFWrapper::RakeTasks do
         .to eq('cvprefix')
       expect(cls.instance_variable_get('@tf_vars_from_env'))
         .to eq('foo' => 'bar')
+      expect(cls.instance_variable_get('@allowed_empty_vars'))
+        .to eq(%w[bar blam])
       expect(cls.instance_variable_get('@tf_extra_vars'))
         .to eq('baz' => 'blam')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
@@ -317,6 +321,7 @@ describe TFWrapper::RakeTasks do
         .to eq(Gem::Version.new('0.0.0'))
       vars = { foo: 'bar', baz: 'blam' }
       subject.instance_variable_set('@tf_vars_from_env', vars)
+      subject.instance_variable_set('@allowed_empty_vars', ['bar'])
       allow(TFWrapper::Helpers).to receive(:check_env_vars)
       allow(ENV).to receive(:[])
       subject.instance_variable_set(
@@ -329,7 +334,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:check_tf_version)
         .and_return(Gem::Version.new('0.9.5'))
       expect(TFWrapper::Helpers)
-        .to receive(:check_env_vars).once.ordered.with(vars.values)
+        .to receive(:check_env_vars).once.ordered.with(vars.values, ['bar'])
       expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false '\
@@ -351,7 +356,7 @@ describe TFWrapper::RakeTasks do
       allow(subject).to receive(:check_tf_version)
         .and_return(Gem::Version.new('0.10.2'))
       expect(TFWrapper::Helpers)
-        .to receive(:check_env_vars).once.ordered.with(vars.values)
+        .to receive(:check_env_vars).once.ordered.with(vars.values, [])
       expect(subject).to receive(:check_tf_version).once.ordered
       expect(subject).to receive(:terraform_runner).once.ordered
         .with('terraform init -input=false')

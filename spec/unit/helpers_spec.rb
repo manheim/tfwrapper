@@ -213,9 +213,15 @@ describe TFWrapper::Helpers do
     it 'returns nil if vars present' do
       ENV['foo'] = 'fooval'
       ENV['bar'] = 'barval'
-      expect(TFWrapper::Helpers.check_env_vars(%w[foo bar])).to be_nil
+      expect(TFWrapper::Helpers.check_env_vars(%w[foo bar], [])).to be_nil
       ENV.delete('foo')
       ENV.delete('bar')
+    end
+    it 'returns nil if vars ignored' do
+      ENV['foo'] = ''
+      expect(TFWrapper::Helpers.check_env_vars(%w[foo bar], %w[foo bar]))
+        .to be_nil
+      ENV.delete('foo')
     end
     it 'exits if not present' do
       ENV.delete('foo')
@@ -224,7 +230,7 @@ describe TFWrapper::Helpers do
         .with('ERROR: Environment variable \'foo\' must be set.')
       expect(STDOUT).to receive(:puts)
         .with('ERROR: Environment variable \'bar\' must be set.')
-      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar]) }
+      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar], %w[baz]) }
         .to raise_error StandardError, 'Missing or empty environment ' \
           'variables: ["foo", "bar"]'
     end
@@ -235,9 +241,29 @@ describe TFWrapper::Helpers do
         .with("ERROR: Environment variable 'foo' must not be empty.")
       expect(STDOUT).to receive(:puts)
         .with("ERROR: Environment variable 'bar' must not be empty.")
-      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar]) }
+      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar], %w[baz]) }
         .to raise_error StandardError, 'Missing or empty environment ' \
           'variables: ["foo", "bar"]'
+      ENV.delete('foo')
+      ENV.delete('bar')
+    end
+    it 'exits if not present and partially ignored' do
+      ENV.delete('foo')
+      ENV.delete('bar')
+      expect(STDOUT).to receive(:puts)
+        .with('ERROR: Environment variable \'foo\' must be set.')
+      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar], %w[bar]) }
+        .to raise_error StandardError, 'Missing or empty environment ' \
+          'variables: ["foo"]'
+    end
+    it 'exits if empty and partially ignored' do
+      ENV['foo'] = ''
+      ENV['bar'] = '    '
+      expect(STDOUT).to receive(:puts)
+        .with("ERROR: Environment variable 'foo' must not be empty.")
+      expect { TFWrapper::Helpers.check_env_vars(%w[foo bar], %w[bar]) }
+        .to raise_error StandardError, 'Missing or empty environment ' \
+          'variables: ["foo"]'
       ENV.delete('foo')
       ENV.delete('bar')
     end

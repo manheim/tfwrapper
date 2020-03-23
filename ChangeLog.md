@@ -1,3 +1,8 @@
+Version 0.6.1
+
+  - Add ``allowed_empty_vars`` option.
+  - Only support terraform up to 0.11.14.
+
 Version 0.6.0
 
   - Include full terraform output when a terraform run fails with output including ``hrottling``, ``status code: 403``, or ``status code: 401``. Previously terraform output was suppressed in these cases, which causes confusion with providers other than "aws" that include these strings in their failure output.

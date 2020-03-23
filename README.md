@@ -4,7 +4,7 @@ Build of master branch: [![TravisCI](https://api.travis-ci.org/manheim/tfwrapper
 
 Documentation: [http://www.rubydoc.info/gems/tfwrapper/](http://www.rubydoc.info/gems/tfwrapper/)
 
-tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) 0.9+, ensuring proper initialization and passing in variables from the environment or Ruby, as well as optionally pushing some information to Consul. tfwrapper also attempts to detect and retry
+tfwrapper provides Rake tasks for working with [Hashicorp Terraform](https://www.terraform.io/) 0.9 through 0.11, ensuring proper initialization and passing in variables from the environment or Ruby, as well as optionally pushing some information to Consul. tfwrapper also attempts to detect and retry
 failed runs due to AWS throttling or access denied errors.
 
 ## Overview
@@ -44,12 +44,12 @@ with 1.9.3 is simply too high to justify.
 Add to your ``Gemfile``:
 
 ```ruby
-gem 'tfwrapper', '~> 0.5.1'
+gem 'tfwrapper', '~> 0.6.1'
 ```
 
 ### Supported Terraform Versions
 
-tfwrapper only supports terraform 0.9+. It is tested against multiple versions from 0.9.2 to 0.10.2 and the current release.
+tfwrapper only supports terraform 0.9-0.11. It is tested against multiple versions from 0.9.2 to 0.11.14.
 
 ### Terraform Landscape
 
@@ -146,6 +146,10 @@ TFWrapper::RakeTasks.install_tasks(
   }
 )
 ```
+
+These variables are tested to be set in the environment with a non-empty value, and will raise an error if any are
+missing or empty. If some should be allowed to be missing or empty empty, pass a ``allowed_empty_vars`` list with
+their environment variable names.
 
 ### Ruby Variables to Terraform Variables
 
