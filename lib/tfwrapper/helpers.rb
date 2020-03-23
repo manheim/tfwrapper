@@ -78,9 +78,12 @@ module TFWrapper
     # non-empty. Raise StandardError if any aren't.
     #
     # @param required [Array] list of required environment variables
-    def self.check_env_vars(required)
+    # @param allowed_missing [Array] list of environment variables to allow to
+    #  be empty or missing.
+    def self.check_env_vars(required, allowed_missing)
       missing = []
       required.each do |name|
+        next if allowed_missing.include?(name)
         if !ENV.include?(name)
           puts "ERROR: Environment variable '#{name}' must be set."
           missing << name

@@ -44,7 +44,7 @@ with 1.9.3 is simply too high to justify.
 Add to your ``Gemfile``:
 
 ```ruby
-gem 'tfwrapper', '~> 0.5.1'
+gem 'tfwrapper', '~> 0.6.1'
 ```
 
 ### Supported Terraform Versions
@@ -146,6 +146,10 @@ TFWrapper::RakeTasks.install_tasks(
   }
 )
 ```
+
+These variables are tested to be set in the environment with a non-empty value, and will raise an error if any are
+missing or empty. If some should be allowed to be missing or empty empty, pass a ``allowed_empty_vars`` list with
+their environment variable names.
 
 ### Ruby Variables to Terraform Variables
 
