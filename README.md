@@ -330,6 +330,26 @@ $ consul kv get terraform/inputs/foo
 {"FOO":"one", "BAR":"two"}
 ```
 
+### Sensitive Environment Variables
+If you wish for certain variables to be marked as "redacted", use the ``tf_sensitive_vars`` option. this is an array of variables that will not be printed.
+
+Note that ``aws_access_key`` and ``aws_secret_key`` will always be redacted without requiring configuration.
+
+
+Example to redact the vaule for ``secret``:
+
+Rakefile:
+
+```ruby
+require 'tfwrapper/raketasks'
+
+TFWrapper::RakeTasks.install_tasks(
+  '.',
+  tf_vars_from_env: {'foo' => 'FOO', 'bar' => 'BAR', 'secret' => 'abc'},
+  tf_sensitive_vars: ['secret']
+)
+```
+
 ## Development
 
 1. ``bundle install --path vendor``
