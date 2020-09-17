@@ -925,6 +925,7 @@ describe TFWrapper::RakeTasks do
         Rake.application = rake_application
       end
       before do
+        subject.instance_variable_set('@tf_sensitive_vars', ['secret'])
         subject.instance_variable_set('@ns_prefix', 'foo')
         subject.install_write_tf_vars
       end
