@@ -468,7 +468,16 @@ module TFWrapper
 
       puts "Writing stack information to #{@consul_url} at: "\
         "#{@consul_env_vars_prefix}"
-      puts JSON.pretty_generate(data)
+
+      redacted_list = (%w[aws_access_key aws_secret_key] +
+        @tf_sensitive_vars)
+      sanitized_data = data.clone
+      @tf_vars_from_env.each do |k, v|
+        # We are trying to determine which ENV var maps
+        #   to the sensitive terraform variable
+        sanitized_data[v] = '(redacted)' if redacted_list.include?(k)
+      end
+      puts JSON.pretty_generate(sanitized_data)
       raw = JSON.generate(data)
       Diplomat::Kv.put(@consul_env_vars_prefix, raw)
     end
