@@ -331,9 +331,9 @@ $ consul kv get terraform/inputs/foo
 ```
 
 ### Sensitive Environment Variables
-If you wish for certain variables to be marked as "redacted", use the ``tf_sensitive_vars`` option. this is an array of variables that will not be printed.
+If you wish for certain variables to be marked as "redacted", use the ``tf_sensitive_vars`` option. This is an array of variables that will not be printed.
 
-Note that ``aws_access_key`` and ``aws_secret_key`` will always be redacted without requiring configuration.
+Note: ``aws_access_key`` and ``aws_secret_key`` will always be redacted without requiring configuration.
 
 
 Example to redact the vaule for ``secret``:
