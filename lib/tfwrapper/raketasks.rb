@@ -322,7 +322,8 @@ module TFWrapper
           tf_vars = terraform_vars
           puts 'Terraform vars:'
           tf_vars.sort.map do |k, v|
-            redacted_list = (%w[aws_access_key aws_secret_key] + @tf_sensitive_vars)
+            redacted_list = (%w[aws_access_key aws_secret_key] +
+                             @tf_sensitive_vars)
             if redacted_list.include?(k)
               puts "#{k} => (redacted)"
             else
