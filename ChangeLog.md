@@ -1,3 +1,7 @@
+Version 0.6.2
+
+  - Add ``tf_sensitive_vars`` option.
+
 Version 0.6.1
 
   - Add ``allowed_empty_vars`` option.
