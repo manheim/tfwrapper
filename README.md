@@ -345,7 +345,7 @@ require 'tfwrapper/raketasks'
 
 TFWrapper::RakeTasks.install_tasks(
   '.',
-  tf_vars_from_env: {'foo' => 'FOO', 'bar' => 'BAR', 'secret' => 'abc'},
+  tf_vars_from_env: {'foo' => 'FOO', 'bar' => 'BAR', 'secret' => 'SECRET'},
   tf_sensitive_vars: ['secret']
 )
 ```
