@@ -60,6 +60,7 @@ describe TFWrapper::RakeTasks do
       expect(cls.instance_variable_get('@consul_env_vars_prefix')).to eq(nil)
       expect(cls.instance_variable_get('@tf_vars_from_env')).to eq({})
       expect(cls.instance_variable_get('@allowed_empty_vars')).to eq([])
+      expect(cls.instance_variable_get('@tf_sensitive_vars')).to eq([])
       expect(cls.instance_variable_get('@tf_extra_vars')).to eq({})
       expect(cls.instance_variable_get('@backend_config')).to eq({})
       expect(cls.instance_variable_get('@consul_url')).to eq(nil)
@@ -89,6 +90,7 @@ describe TFWrapper::RakeTasks do
         consul_env_vars_prefix: 'cvprefix',
         tf_vars_from_env: { 'foo' => 'bar' },
         allowed_empty_vars: %w[bar blam],
+        tf_sensitive_vars: %w[secret],
         tf_extra_vars: { 'baz' => 'blam' },
         consul_url: 'foobar',
         before_proc: bproc,
@@ -104,6 +106,8 @@ describe TFWrapper::RakeTasks do
         .to eq('foo' => 'bar')
       expect(cls.instance_variable_get('@allowed_empty_vars'))
         .to eq(%w[bar blam])
+      expect(cls.instance_variable_get('@tf_sensitive_vars'))
+        .to eq(%w[secret])
       expect(cls.instance_variable_get('@tf_extra_vars'))
         .to eq('baz' => 'blam')
       expect(cls.instance_variable_get('@backend_config')).to eq({})
@@ -832,6 +836,7 @@ describe TFWrapper::RakeTasks do
         Rake.application = rake_application
       end
       before do
+        subject.instance_variable_set('@tf_sensitive_vars', ['secret'])
         subject.install_write_tf_vars
       end
 
@@ -844,7 +849,8 @@ describe TFWrapper::RakeTasks do
         vars = {
           'foo' => 'bar',
           'baz' => 'blam',
-          'aws_access_key' => 'ak'
+          'aws_access_key' => 'ak',
+          'secret' => 'abc'
         }
         allow(subject).to receive(:terraform_vars).and_return(vars)
         allow(subject).to receive(:var_file_path).and_return('file.tfvars.json')
@@ -856,6 +862,8 @@ describe TFWrapper::RakeTasks do
         expect(STDOUT).to receive(:puts).once.with('Terraform vars:')
         expect(STDOUT).to receive(:puts)
           .once.with('aws_access_key => (redacted)')
+        expect(STDOUT).to receive(:puts)
+          .once.with('secret => (redacted)')
         expect(STDOUT).to receive(:puts).once.with('baz => blam')
         expect(STDOUT).to receive(:puts).once.with('foo => bar')
         expect(File).to receive(:open).once.with('file.tfvars.json', 'w')
@@ -917,6 +925,7 @@ describe TFWrapper::RakeTasks do
         Rake.application = rake_application
       end
       before do
+        subject.instance_variable_set('@tf_sensitive_vars', ['secret'])
         subject.instance_variable_set('@ns_prefix', 'foo')
         subject.install_write_tf_vars
       end
@@ -930,7 +939,8 @@ describe TFWrapper::RakeTasks do
         vars = {
           'foo' => 'bar',
           'baz' => 'blam',
-          'aws_access_key' => 'ak'
+          'aws_access_key' => 'ak',
+          'secret' => 'abc'
         }
         allow(subject).to receive(:terraform_vars).and_return(vars)
         allow(subject).to receive(:var_file_path)
@@ -943,6 +953,8 @@ describe TFWrapper::RakeTasks do
         expect(STDOUT).to receive(:puts).once.with('Terraform vars:')
         expect(STDOUT).to receive(:puts)
           .once.with('aws_access_key => (redacted)')
+        expect(STDOUT).to receive(:puts)
+          .once.with('secret => (redacted)')
         expect(STDOUT).to receive(:puts).once.with('baz => blam')
         expect(STDOUT).to receive(:puts).once.with('foo => bar')
         expect(File).to receive(:open).once.with('foo_file.tfvars.json', 'w')

@@ -59,6 +59,8 @@ module TFWrapper
     #   names (specified in :tf_vars_from_env) to allow to be empty or missing.
     # @option opts [Hash] :tf_extra_vars hash of Terraform variables to their
     #   values; overrides any same-named keys in ``tf_vars_from_env``
+    # @option opts [Array] :tf_sensitive_vars list of Terraform variables
+    #   which should not be printed
     # @option opts [String] :consul_url URL to access Consul at, for the
     #   ``:consul_env_vars_prefix`` option.
     # @option opts [String] :consul_env_vars_prefix if specified and not nil,
@@ -99,6 +101,7 @@ module TFWrapper
       @consul_env_vars_prefix = opts.fetch(:consul_env_vars_prefix, nil)
       @tf_vars_from_env = opts.fetch(:tf_vars_from_env, {})
       @allowed_empty_vars = opts.fetch(:allowed_empty_vars, [])
+      @tf_sensitive_vars = opts.fetch(:tf_sensitive_vars, [])
       @tf_extra_vars = opts.fetch(:tf_extra_vars, {})
       @backend_config = opts.fetch(:backend_config, {})
       @consul_url = opts.fetch(:consul_url, nil)
@@ -319,7 +322,9 @@ module TFWrapper
           tf_vars = terraform_vars
           puts 'Terraform vars:'
           tf_vars.sort.map do |k, v|
-            if %w[aws_access_key aws_secret_key].include?(k)
+            redacted_list = (%w[aws_access_key aws_secret_key] +
+                             @tf_sensitive_vars)
+            if redacted_list.include?(k)
               puts "#{k} => (redacted)"
             else
               puts "#{k} => #{v}"
