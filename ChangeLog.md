@@ -1,3 +1,7 @@
+Version 0.6.3
+
+  - Fix bug with ``tf_sensitive_vars``. Prevent values from being printed in ``update_consul_stack_env_vars``.
+
 Version 0.6.2
 
   - Add ``tf_sensitive_vars`` option.

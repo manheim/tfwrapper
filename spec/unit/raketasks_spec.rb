@@ -1421,21 +1421,28 @@ describe TFWrapper::RakeTasks do
   describe '#update_consul_stack_env_vars' do
     context 'when @consul_url and @consul_env_vars_prefix are specified' do
       it 'saves the variables in Consul' do
-        vars = { 'foo' => 'bar', 'baz' => 'blam' }
-        expected = { 'bar' => 'barVal', 'blam' => 'blamVal' }
+        vars = { 'foo' => 'bar', 'baz' => 'blam', 'secret' => 'SECRET' }
+        expected = { 'bar' => 'barVal',
+                     'blam' => 'blamVal',
+                     'SECRET' => 'abc' }
+        sanitized = { 'bar' => 'barVal',
+                      'blam' => 'blamVal',
+                      'SECRET' => '(redacted)' }
         subject.instance_variable_set('@tf_vars_from_env', vars)
         subject.instance_variable_set('@consul_url', 'foo://bar')
         subject.instance_variable_set('@consul_env_vars_prefix', 'my/prefix')
+        subject.instance_variable_set('@tf_sensitive_vars', ['secret'])
         allow(ENV).to receive(:[])
         allow(ENV).to receive(:[]).with('CONSUL_HOST').and_return('chost')
         allow(ENV).to receive(:[]).with('bar').and_return('barVal')
         allow(ENV).to receive(:[]).with('blam').and_return('blamVal')
+        allow(ENV).to receive(:[]).with('SECRET').and_return('abc')
         allow(Diplomat::Kv).to receive(:put)
 
         expect(STDOUT).to receive(:puts).once
           .with('Writing stack information to foo://bar at: my/prefix')
         expect(STDOUT).to receive(:puts).once
-          .with(JSON.pretty_generate(expected))
+          .with(JSON.pretty_generate(sanitized))
         expect(Diplomat::Kv).to receive(:put)
           .once.with('my/prefix', JSON.generate(expected))
         subject.update_consul_stack_env_vars
